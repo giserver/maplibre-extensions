@@ -1,7 +1,7 @@
 import { Events } from "./event";
 
 export type TLayerGroupEventDefinition = {
-    "visible-change": { target: LayerGroup };
+    "visible": { target: LayerGroup };
     "move": { target: LayerGroup };
     "destroy": { target: LayerGroup };
 };
@@ -53,6 +53,8 @@ export class LayerGroup<TEventDefinition extends TLayerGroupEventDefinition & Ev
 
         // 记录显隐性
         this._visible = value;
+
+        this.fire("visible", { target: this as any });
     }
 
     /**

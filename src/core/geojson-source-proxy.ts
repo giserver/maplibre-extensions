@@ -1,45 +1,44 @@
 import { uuidv7 } from 'uuidv7';
-
 import { TIdentityGeoJSONFeature } from "../types";
 import { Events } from './event';
 
 
-interface GeoJSONSourceProxyOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> {
+export interface GeoJSONSourceProxyOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> {
     map: maplibregl.Map;
     data: TFeature[];
-    sourceId?: string;
+    id?: string;
 }
 
 export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> extends Events.EventManager<{
-    "add-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
-    "update-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
-    "delete-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
-    "clear-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
-    "hidden-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
-    "unhidden-features": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "add": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "update": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "delete": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "clear": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "hidden": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
+    "unhidden": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
     "data-change": { target: GeoJSONSourceProxy<TFeature> };
 }> {
     protected data = new Map<string, TFeature>();
     protected hiddenData = new Map<string, TFeature>();
 
     readonly map: maplibregl.Map;
-    readonly sourceId: string;
+    readonly id: string;
 
     get geojsonSource() {
-        return this.map.getSource(this.sourceId) as maplibregl.GeoJSONSource;
+        return this.map.getSource(this.id) as maplibregl.GeoJSONSource;
     }
 
     constructor(options: GeoJSONSourceProxyOptions<TFeature>) {
         super();
 
         this.map = options.map;
-        this.sourceId = options.sourceId ?? uuidv7();
+        this.id = options.id ?? uuidv7();
 
         options.data.forEach(f => {
             this.data.set(f.properties.id, f);
         });
 
-        this.map.addSource(this.sourceId, {
+        this.map.addSource(this.id, {
             type: 'geojson',
             data: { type: "FeatureCollection", features: options.data },
             promoteId: "id"
@@ -81,9 +80,9 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
         });
 
         if (addFeatures.length > 0)
-            this.fire("add-features", { target: this, features: addFeatures });
+            this.fire("add", { target: this, features: addFeatures });
         if (updateFeatures.length > 0)
-            this.fire("update-features", { target: this, features: updateFeatures });
+            this.fire("update", { target: this, features: updateFeatures });
 
         this.fire("data-change", { target: this });
 
@@ -112,7 +111,7 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
             remove: deleteIds
         });
 
-        this.fire("delete-features", { target: this, features: deleteFeatures });
+        this.fire("delete", { target: this, features: deleteFeatures });
         this.fire("data-change", { target: this });
 
         return deleteFeatures;
@@ -126,7 +125,7 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
             removeAll: true,
         });
 
-        this.fire("clear-features", { target: this, features });
+        this.fire("clear", { target: this, features });
         this.fire("data-change", { target: this });
         return features;
     }
@@ -149,7 +148,7 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
             remove: hiddenFeatures.map((x) => x.properties.id),
         });
 
-        this.fire("hidden-features", { target: this, features: hiddenFeatures });
+        this.fire("hidden", { target: this, features: hiddenFeatures });
         this.fire("data-change", { target: this });
         return hiddenFeatures;
     }
@@ -181,7 +180,7 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
             add: features,
         });
 
-        this.fire("unhidden-features", { target: this, features });
+        this.fire("unhidden", { target: this, features });
         this.fire("data-change", { target: this });
         return features;
     }

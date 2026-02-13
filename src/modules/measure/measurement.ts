@@ -3,6 +3,7 @@ import * as turf from '@turf/turf';
 type TMeasureResultFeature = GeoJSON.Feature<GeoJSON.Point, {
     value: string;
     type: "point" | "line" | "line-segment" | "polygon" | "polygon-line" | "polygon-line-segment";
+    parent: GeoJSON.Geometry | GeoJSON.Feature
 }>;
 
 type TMeasurePointOptions = {
@@ -65,17 +66,26 @@ function measurePolygon(g: GeoJSON.Position[][], options: TMeasurePolygonOptions
 }
 
 function measureGeometry(g: GeoJSON.Geometry | GeoJSON.Feature | GeoJSON.FeatureCollection, options: TMeasureGeometryOptions): TMeasureResultFeature[] {
-    if (g.type === 'Point') return measurePoint(g.coordinates, options.point);
-    if (g.type === 'LineString') return measureLineString(g.coordinates, options.line);
-    if (g.type === 'Polygon') return measurePolygon(g.coordinates, options.polygon);
+    let result = new Array<TMeasureResultFeature>();
 
-    const result = new Array<TMeasureResultFeature>();
-    if (g.type === 'MultiPoint') return g.coordinates.reduce((p, c) => p.concat(measurePoint(c, options.point)), result);
-    if (g.type === 'MultiLineString') return g.coordinates.reduce((p, c) => p.concat(measureLineString(c, options.line)), result);
-    if (g.type === 'MultiPolygon') return g.coordinates.reduce((p, c) => p.concat(measurePolygon(c, options.polygon)), result);
+    if (g.type === 'Point') result = measurePoint(g.coordinates, options.point);
+    else if (g.type === 'LineString') result = measureLineString(g.coordinates, options.line);
+    else if (g.type === 'Polygon') result = measurePolygon(g.coordinates, options.polygon);
 
-    if (g.type === 'GeometryCollection') return g.geometries.reduce((p, c) => p.concat(measureGeometry(c, options)), result);
+    else if (g.type === 'MultiPoint') g.coordinates.reduce((p, c) => p.concat(measurePoint(c, options.point)), result);
+    else if (g.type === 'MultiLineString')  g.coordinates.reduce((p, c) => p.concat(measureLineString(c, options.line)), result);
+    else if (g.type === 'MultiPolygon') g.coordinates.reduce((p, c) => p.concat(measurePolygon(c, options.polygon)), result);
+    else if (g.type === 'GeometryCollection') g.geometries.reduce((p, c) => p.concat(measureGeometry(c, options)), result);
 
-    if (g.type === 'Feature') return measureGeometry(g.geometry, options);
-    return g.features.reduce((p, c) => p.concat(measureGeometry(c, options)), result);
+    else if (g.type === 'Feature') result = measureGeometry(g.geometry, options);
+
+    else {
+        return g.features.reduce((p, c) => p.concat(measureGeometry(c, options)), result);
+    }
+
+    result.forEach(r=>{
+        r.properties.parent = g;
+    });
+
+    return result;
 }

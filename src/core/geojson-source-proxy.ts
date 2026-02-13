@@ -3,7 +3,7 @@ import { TIdentityGeoJSONFeature } from "../types";
 import { Events } from './event';
 
 
-export interface GeoJSONSourceProxyOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> {
+export type GeoJSONSourceProxyOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> = {
     map: maplibregl.Map;
     data: TFeature[];
     id?: string;

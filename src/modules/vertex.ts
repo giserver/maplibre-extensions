@@ -6,9 +6,9 @@ type TCustomFeature = GeoJSON.Feature<GeoJSON.Geometry, { id: number; type?: "en
 export class VertexEditorMananger {
     private vertexStore: VertexStore;
     readonly id = "geometry-editor";
-    readonly layer_point = this.id + "-point";
-    readonly layer_line = this.id + "-line";
-    readonly layer_polygon = this.id + "-polygon";
+    readonly id_layer_point = this.id + "-point";
+    readonly id_layer_line = this.id + "-line";
+    readonly id_layer_polygon = this.id + "-polygon";
 
     private hoverFeature: TCustomFeature | undefined;
     private activeFeature: TCustomFeature | undefined;
@@ -18,7 +18,7 @@ export class VertexEditorMananger {
     /**
      *
      */
-    constructor(private map: maplibregl.Map) {
+    constructor(readonly map: maplibregl.Map) {
         this.map.addSource(this.id, {
             type: "geojson",
             data: {
@@ -30,7 +30,7 @@ export class VertexEditorMananger {
 
         // 面图层
         this.map.addLayer({
-            id: this.layer_polygon,
+            id: this.id_layer_polygon,
             type: "fill",
             source: this.id,
             filter: ["==", ["geometry-type"], "Polygon"],
@@ -42,7 +42,7 @@ export class VertexEditorMananger {
 
         // 线图层
         this.map.addLayer({
-            id: this.layer_line,
+            id: this.id_layer_line,
             type: "line",
             source: this.id,
             filter: ["!=", ["geometry-type"], "Point"],
@@ -55,7 +55,7 @@ export class VertexEditorMananger {
 
         // 点图层
         this.map.addLayer({
-            id: this.layer_point,
+            id: this.id_layer_point,
             type: "circle",
             source: this.id,
             layout: {},
@@ -74,7 +74,7 @@ export class VertexEditorMananger {
             filter: ["==", ["geometry-type"], "Point"],
         });
 
-        this.map.on("mouseenter", this.layer_point, (e) => {
+        this.map.on("mouseenter", this.id_layer_point, (e) => {
             const feature = e.features?.[0];
             if (feature) {
                 this.hoverFeature = feature as any;
@@ -83,7 +83,7 @@ export class VertexEditorMananger {
             }
         });
 
-        this.map.on("mouseleave", this.layer_point, (e) => {
+        this.map.on("mouseleave", this.id_layer_point, (e) => {
             if (this.hoverFeature) {
                 this.map.setFeatureState({ id: this.hoverFeature.properties.id, source: this.id }, { hover: false });
                 this.hoverFeature = undefined;
@@ -100,7 +100,7 @@ export class VertexEditorMananger {
             }
         };
 
-        this.map.on("mousedown", this.layer_point, (e) => {
+        this.map.on("mousedown", this.id_layer_point, (e) => {
             const feature = e.features?.[0];
             if (feature) {
                 if (this.hoverFeature) {
@@ -133,7 +133,7 @@ export class VertexEditorMananger {
             }
         });
 
-        this.map.on("click", [this.layer_line,this.layer_point,this.layer_polygon], e=>{
+        this.map.on("click", [this.id_layer_line,this.id_layer_point,this.id_layer_polygon], e=>{
             e.preventDefault();
         });
 

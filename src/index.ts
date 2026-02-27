@@ -2,6 +2,8 @@ import maplibregl from "maplibre-gl";
 import LayerProxy from "./core/layer-proxy";
 import { CONTRACT_STRINGS } from "./core";
 
+export * from './modules';
+
 declare module "maplibre-gl" {
     interface Map {
         getLayerProxy<T extends maplibregl.LayerSpecification>(id: string): LayerProxy<T>;

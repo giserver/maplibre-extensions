@@ -93,21 +93,13 @@ export class SnapManager {
         ['line-above', `<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path fill="#d81e06" d="M231.700059 68.191078l0 233.583966 210.224955 210.224955L231.700059 722.224955l0 233.583966 560.600905 0L792.300964 722.224955 582.074985 512l210.224955-210.224955L792.299941 68.191078 231.700059 68.191078zM698.866968 745.582943l0 116.791983L325.133032 862.374926 325.133032 745.582943l186.866968-186.866968L698.866968 745.582943zM512 465.283002 325.133032 278.416034 325.133032 161.624051l373.733936 0 0 116.791983L512 465.283002z" p-id="10111"></path></svg>`],
         ['line-mid', `<svg viewBox="0 110 1024 1024" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path fill="#d81e06" d="M973.603 886.76H50.397L512 87.24l461.603 799.52z m-750-100h576.795L512 287.24 223.603 786.76z" p-id="11312"></path></svg>`]
     ]);
-    private _hidden = false;
+
+    private enable = false;
 
     allowedLayers: string[] | (() => string[]) | undefined;
     featureTranslator: ((features: maplibregl.MapGeoJSONFeature[]) => GeoJSON.Feature[]) | undefined;
     tolerance: number;
-    enable = false;
 
-    get hidden() {
-        return this._hidden;
-    }
-
-    set hidden(value: boolean) {
-        this._hidden = value;
-        this._snapHtmlElement.style.opacity = value ? "0" : "1";
-    }
 
     get hitPoint(): GeoJSON.Position | undefined {
         return this._hitPoint;
@@ -126,7 +118,6 @@ export class SnapManager {
         style.zIndex = "1";
         style.transform = "translate(-50%, -50%)";
         style.pointerEvents = "none";
-        style.opacity = "0";
         style.lineHeight = "0";
         style.fontSize = '0';
         this.map.getContainer().appendChild(this._snapHtmlElement);

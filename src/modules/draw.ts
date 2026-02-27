@@ -195,7 +195,7 @@ export class DrawManager {
 
     private clearPolygonSubline() {
         (this.map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource)
-            .updateData({ removeAll: true });
+            .setData({ type: 'FeatureCollection', features:[]});
     }
 
     private drawPoint() {

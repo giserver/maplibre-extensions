@@ -82,7 +82,7 @@ function measureLineString(g: GeoJSON.Position[], options: MeasureLineStringOpti
                 geometry: { type: "LineString", coordinates: [last, current] },
                 properties: {},
             };
-            const l = options.length ? options.length(line.geometry) : turf.length(line, { units: 'miles' });
+            const l = options.length ? options.length(line.geometry) : turf.length(line, { units: 'meters' });
             const c = turf.center(line);
 
             sumLength += l;

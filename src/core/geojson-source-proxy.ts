@@ -1,15 +1,15 @@
 import { uuidv7 } from 'uuidv7';
-import { TIdentityGeoJSONFeature } from "./types";
+import { IdentityGeoJSONFeature } from "./types";
 import { Events } from './event';
 
 
-export type GeoJSONSourceProxyOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> = {
+export type GeoJSONSourceProxyOptions<TFeature extends IdentityGeoJSONFeature = IdentityGeoJSONFeature> = {
     map: maplibregl.Map;
     data: TFeature[];
     id?: string;
 }
 
-export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> extends Events.EventManager<{
+export class GeoJSONSourceProxy<TFeature extends IdentityGeoJSONFeature = IdentityGeoJSONFeature> extends Events.EventManager<{
     "add": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
     "update": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
     "delete": { target: GeoJSONSourceProxy<TFeature>; features: Array<TFeature> };
@@ -49,7 +49,7 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
         return this.data.get(id) ?? this.hiddenData.get(id);
     }
 
-    where(predicate: (feature: TIdentityGeoJSONFeature) => boolean) {
+    where(predicate: (feature: IdentityGeoJSONFeature) => boolean) {
         return Array.from(this.data.values()).concat(Array.from(this.hiddenData.values())).filter(predicate);
     }
 

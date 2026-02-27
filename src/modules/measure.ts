@@ -178,6 +178,7 @@ export function measureGeometry(g: GeoJSON.Geometry | GeoJSON.Feature | GeoJSON.
 }
 
 export type TMeasureManagerOptions = {
+    sourceProxy: GeoJSONSourceProxy,
     base: TMeasureGeometryOptions;
 }
 
@@ -185,6 +186,7 @@ export class MeasureManager {
     private customFeatures: IdentityGeoJSONFeature[] = [];
 
     readonly map: maplibregl.Map;
+    readonly sourceProxy: GeoJSONSourceProxy;
 
     readonly id_source_measure_symbol = uuidv7();
     readonly id_layer_measrue_point = uuidv7();
@@ -318,8 +320,9 @@ export class MeasureManager {
     /**
      *
      */
-    constructor(readonly sourceProxy: GeoJSONSourceProxy, private options: TMeasureManagerOptions) {
-        this.map = sourceProxy.map;
+    constructor(private options: TMeasureManagerOptions) {
+        this.map = options.sourceProxy.map;
+        this.sourceProxy = options.sourceProxy;
 
         // 清空自定义数据
         this.sourceProxy.on("clear", async () => { this.customFeatures = []; });

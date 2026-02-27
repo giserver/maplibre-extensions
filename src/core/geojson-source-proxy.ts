@@ -5,7 +5,7 @@ import { Events } from './event';
 
 export type GeoJSONSourceProxyOptions<TFeature extends IdentityGeoJSONFeature = IdentityGeoJSONFeature> = {
     map: maplibregl.Map;
-    data: TFeature[];
+    data?: TFeature[];
     id?: string;
 }
 
@@ -34,13 +34,14 @@ export class GeoJSONSourceProxy<TFeature extends IdentityGeoJSONFeature = Identi
         this.map = options.map;
         this.id = options.id ?? uuidv7();
 
-        options.data.forEach(f => {
-            this.data.set(f.properties.id, f);
-        });
+        if (options.data)
+            options.data.forEach(f => {
+                this.data.set(f.properties.id, f);
+            });
 
         this.map.addSource(this.id, {
             type: 'geojson',
-            data: { type: "FeatureCollection", features: options.data },
+            data: { type: "FeatureCollection", features: options.data ?? [] },
             promoteId: "id"
         });
     }
@@ -53,7 +54,7 @@ export class GeoJSONSourceProxy<TFeature extends IdentityGeoJSONFeature = Identi
         return Array.from(this.data.values()).concat(Array.from(this.hiddenData.values())).filter(predicate);
     }
 
-    all(){
+    all() {
         return Array.from(this.data.values()).concat(Array.from(this.hiddenData.values()));
     }
 

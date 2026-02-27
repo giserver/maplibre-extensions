@@ -3,22 +3,32 @@ import * as turf from "@turf/turf";
 
 type TCustomFeature = GeoJSON.Feature<GeoJSON.Geometry, { id: number; type?: "end" | "mid"; pid?: number; division_index?: number }>;
 
+export type VertexEditorManangerOptions = {
+    map: maplibregl.Map;
+}
+
 export class VertexEditorMananger {
     private vertexStore: VertexStore;
-    readonly id = "geometry-editor";
-    readonly id_layer_point = this.id + "-point";
-    readonly id_layer_line = this.id + "-line";
-    readonly id_layer_polygon = this.id + "-polygon";
 
     private hoverFeature: TCustomFeature | undefined;
     private activeFeature: TCustomFeature | undefined;
 
     private mosueClickHandlerCache: ((e: any) => void) | undefined;
 
+    readonly map: maplibregl.Map;
+
+    readonly id = "geometry-editor";
+    readonly id_layer_point = this.id + "-point";
+    readonly id_layer_line = this.id + "-line";
+    readonly id_layer_polygon = this.id + "-polygon";
+
+
+
     /**
      *
      */
-    constructor(readonly map: maplibregl.Map) {
+    constructor(options: VertexEditorManangerOptions) {
+        this.map = options.map;
         this.map.addSource(this.id, {
             type: "geojson",
             data: {
@@ -133,7 +143,7 @@ export class VertexEditorMananger {
             }
         });
 
-        this.map.on("click", [this.id_layer_line,this.id_layer_point,this.id_layer_polygon], e=>{
+        this.map.on("click", [this.id_layer_line, this.id_layer_point, this.id_layer_polygon], e => {
             e.preventDefault();
         });
 
@@ -148,7 +158,7 @@ export class VertexEditorMananger {
             }
         });
 
-        this.vertexStore = new VertexStore(map.getSource(this.id) as maplibregl.GeoJSONSource);
+        this.vertexStore = new VertexStore(this.map.getSource(this.id) as maplibregl.GeoJSONSource);
     }
 
     setFeature<TF extends IdentityGeoJSONFeature>(feature: TF, setDone: (id: string, geometry: TF["geometry"]) => void) {
@@ -195,7 +205,7 @@ export class VertexStore {
     /**
      *
      */
-    constructor(private source: maplibregl.GeoJSONSource) {}
+    constructor(private source: maplibregl.GeoJSONSource) { }
 
     setFeature(feature: GeoJSON.Feature) {
         this.orgProperties = feature.properties;

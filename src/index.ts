@@ -3,6 +3,7 @@ import LayerProxy from "./core/layer-proxy";
 import { CONTRACT_STRINGS } from "./core";
 
 export * from './modules';
+export * from './core';
 
 declare module "maplibre-gl" {
     interface Map {

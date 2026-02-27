@@ -22,7 +22,7 @@ function handleMapLoaded(map: maplibregl.Map) {
     map,
     data: [],
   });
-  drawManager = new DrawManager(sourceProxy);
+  drawManager = new DrawManager({sourceProxy});
   measureManager = new MeasureManager(sourceProxy, {
     base: {
       point: {

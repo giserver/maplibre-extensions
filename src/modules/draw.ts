@@ -1,5 +1,6 @@
 import { uuidv7 } from 'uuidv7';
 import { GeoJSONSourceProxy } from '../core';
+import { Events } from '../core';
 
 /**
  * 图层图形类型
@@ -7,11 +8,13 @@ import { GeoJSONSourceProxy } from '../core';
 export type DrawGeometryType = "Point" | "LineString" | "Polygon";
 
 export interface DrawManagerOptions {
-    onDrawed?(feature: GeoJSON.Feature): void;
     once?: boolean;
+    sourceProxy: GeoJSONSourceProxy;
 }
 
-export class DrawManager {
+export class DrawManager extends Events.EventManager<{
+    "drawed": { target: DrawManager; feature: GeoJSON.Feature };
+}> {
     readonly id_layer_point = uuidv7();
     readonly id_layer_point_symbol = uuidv7();
     readonly id_layer_line = uuidv7();
@@ -21,7 +24,7 @@ export class DrawManager {
     readonly id_layer_polygon_outline = uuidv7();
     readonly id_layer_polygon_subline = uuidv7();
 
-    readonly layerSpecs: Readonly<Array<maplibregl.AddLayerObject>> = [
+    readonly layerSpecs: ReadonlyArray<Readonly<maplibregl.AddLayerObject>> = [
         {
             id: this.id_layer_point,
             type: "circle",
@@ -106,6 +109,7 @@ export class DrawManager {
     ];
 
     readonly map: maplibregl.Map;
+    readonly sourceProxy: GeoJSONSourceProxy;
 
     private _drawing = false;
     private currentFeatureId: string | undefined;
@@ -121,20 +125,22 @@ export class DrawManager {
      *
      */
     constructor(
-        readonly sourceProxy: GeoJSONSourceProxy,
-        private options: DrawManagerOptions = {},
+        private options: DrawManagerOptions,
     ) {
-        this.map = sourceProxy.map;
+        super();
+
+        this.map = options.sourceProxy.map;
+        this.sourceProxy = options.sourceProxy;
 
         //#region add layers
         this.layerSpecs.forEach((l) => {
             if (l.id !== this.id_layer_polygon_subline)
                 (l as any).source = this.sourceProxy.id;
 
-            sourceProxy.map.addLayer(l);
+            this.sourceProxy.map.addLayer(l);
         });
 
-        sourceProxy.on("clear", async () => {
+        this.sourceProxy.on("clear", async () => {
             this.clearPolygonSubline();
         });
 
@@ -145,7 +151,7 @@ export class DrawManager {
             if (e.key.toLocaleLowerCase() === "escape") {
                 // 如果当前绘制数据删除
                 if (this.currentFeatureId) {
-                    sourceProxy.delete(this.currentFeatureId);
+                    this.sourceProxy.delete(this.currentFeatureId);
                     this.currentFeatureId = undefined;
                 }
 
@@ -195,7 +201,7 @@ export class DrawManager {
 
     private clearPolygonSubline() {
         (this.map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource)
-            .setData({ type: 'FeatureCollection', features:[]});
+            .setData({ type: 'FeatureCollection', features: [] });
     }
 
     private drawPoint() {
@@ -213,7 +219,7 @@ export class DrawManager {
                 },
             });
 
-            this.options.onDrawed?.(features.addFeatures[0]);
+            this.fire("drawed", { target: this, feature: features.addFeatures[0] });
             if (this.options.once) {
                 this.stop();
             }
@@ -273,7 +279,7 @@ export class DrawManager {
                 this.sourceProxy.delete(feature.properties.id);
             } else {
                 this.sourceProxy.update(feature);
-                this.options.onDrawed?.call(this, feature);
+                this.fire("drawed", { target: this, feature });
                 if (this.options.once) this.stop();
             }
         };
@@ -392,7 +398,7 @@ export class DrawManager {
                 // 添加第一个点 (闭合)
                 coords.push(coords[0]);
                 this.sourceProxy.update(feature);
-                this.options.onDrawed?.call(this, feature);
+                this.fire("drawed", { target: this, feature });
 
                 if (this.options.once) this.stop();
             }

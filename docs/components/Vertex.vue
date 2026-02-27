@@ -35,7 +35,7 @@ const data = {
 let vertexEditorManager: VertexEditorMananger;
 
 function handleMapLoad(map: maplibregl.Map) {
-  vertexEditorManager = new VertexEditorMananger(map);
+  vertexEditorManager = new VertexEditorMananger({ map });
 
   map.addSource(id_data, {
     type: "geojson",
@@ -62,14 +62,15 @@ function handleEditClick() {
   const source = vertexEditorManager.map.getSource(
     id_data,
   ) as maplibregl.GeoJSONSource;
-  source.setData({
-    type: "FeatureCollection",
-    features: [],
-  });
 
   vertexEditorManager.setFeature(data, (id, geometry) => {
     data.geometry = geometry;
     source.setData(data);
+  });
+
+  source.setData({
+    type: "FeatureCollection",
+    features: [],
   });
 }
 </script>

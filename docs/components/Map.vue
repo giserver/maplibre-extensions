@@ -46,7 +46,7 @@ onMounted(() => {
 <style scoped>
 #maplibre-container {
   width: 100%;
-  height: 400px;
+  height: 750px;
 }
 
 #controls {
@@ -56,7 +56,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   pointer-events: none;
-  z-index: 100;
+  z-index: 1;
 }
 
 #controls > * {

@@ -20,7 +20,7 @@ function handleMapLoaded(map: maplibregl.Map) {
     data: [],
   });
 
-  drawManager = new DrawManager(sourceProxy);
+  drawManager = new DrawManager({ sourceProxy });
 
   snapManager.featureTranslator = () => {
     const features = sourceProxy.all();

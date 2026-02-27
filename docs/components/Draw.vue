@@ -1,5 +1,13 @@
 <template>
-  <Map @map-loaded="handleMapLoaded"></Map>
+  <Map @map-loaded="handleMapLoaded">
+    <template #top-right>
+      <textarea
+        style="height: 730px; width: 240px; font-size: 10px; opacity: 0.8"
+        readonly
+        >{{ dataStr }}</textarea
+      >
+    </template>
+  </Map>
 
   <div class="control-panel">
     <button @click="handleButtonClick('Point')">画点</button>
@@ -12,27 +20,30 @@
 
 <script setup lang="ts">
 import Map from "./Map.vue";
-import { DrawGeometryType, DrawManager } from "../../src";
-import { GeoJSONSourceProxy } from "../../src/core";
+import { DrawGeometryType, DrawManager, GeoJSONSourceProxy } from "../../src";
+import { ref } from "vue";
 
+const dataStr = ref("");
 let drawManager: DrawManager;
-
 function handleMapLoaded(map: maplibregl.Map) {
   const sourceProxy = new GeoJSONSourceProxy({
     map,
-    data: [],
   });
 
-  drawManager = new DrawManager(sourceProxy);
+  sourceProxy.on("data-change", async (e) => {
+    dataStr.value = JSON.stringify(sourceProxy.all(), null, 2);
+  });
+
+  drawManager = new DrawManager({ sourceProxy });
 }
 
-function handleButtonClick(action : DrawGeometryType | "stop" | "clear"){
-  if(action === "stop"){
+function handleButtonClick(action: DrawGeometryType | "stop" | "clear") {
+  if (action === "stop") {
     drawManager.stop();
     return;
   }
 
-  if(action === "clear"){
+  if (action === "clear") {
     drawManager.clear();
     return;
   }
@@ -42,9 +53,9 @@ function handleButtonClick(action : DrawGeometryType | "stop" | "clear"){
 </script>
 
 <style scoped>
-.control-panel{
-    margin-top: 12px;
-    display: flex;
-    gap: 12px;
+.control-panel {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
 }
 </style>

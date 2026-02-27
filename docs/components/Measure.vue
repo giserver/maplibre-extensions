@@ -22,8 +22,9 @@ function handleMapLoaded(map: maplibregl.Map) {
     map,
     data: [],
   });
-  drawManager = new DrawManager({sourceProxy});
-  measureManager = new MeasureManager(sourceProxy, {
+  drawManager = new DrawManager({ sourceProxy });
+  measureManager = new MeasureManager({
+    sourceProxy,
     base: {
       point: {
         format: (p) => `${p[0].toFixed(6)}, ${p[1].toFixed(6)}`,
@@ -68,9 +69,9 @@ function handleButtonClick(action: DrawGeometryType | "stop" | "clear") {
 </script>
 
 <style scoped>
-.control-panel{
-    margin-top: 12px;
-    display: flex;
-    gap: 12px;
+.control-panel {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
 }
 </style>

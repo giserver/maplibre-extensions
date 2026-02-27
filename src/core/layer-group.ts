@@ -1,13 +1,13 @@
 import { Events } from "./event";
 
-export type TLayerGroupEventDefinition = {
+export type LayerGroupEventDefinition = {
     "visible": { target: LayerGroup };
     "move": { target: LayerGroup };
     "destroy": { target: LayerGroup };
 };
 
-export class LayerGroup<TEventDefinition extends TLayerGroupEventDefinition & Events.EventDefinition = TLayerGroupEventDefinition> extends Events.EventManager<
-    TLayerGroupEventDefinition & TEventDefinition
+export class LayerGroup<EventDefinition extends LayerGroupEventDefinition & Events.EventDefinition = LayerGroupEventDefinition> extends Events.EventManager<
+    LayerGroupEventDefinition & EventDefinition
 > {
     protected _visible: boolean = true;
     protected _layers: string[];

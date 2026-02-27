@@ -1,6 +1,6 @@
 import maplibregl from "maplibre-gl";
 import LayerProxy from "./core/layer-proxy";
-import { CONTRACT_STRINGS } from "./contracts";
+import { CONTRACT_STRINGS } from "./core";
 
 declare module "maplibre-gl" {
     interface Map {

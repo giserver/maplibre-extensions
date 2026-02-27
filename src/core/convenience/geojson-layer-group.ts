@@ -1,6 +1,6 @@
 import { LayerGroup, TLayerGroupEventDefinition } from "../layer-group";
 import { GeoJSONSourceProxy } from "../geojson-source-proxy";
-import { TIdentityGeoJSONFeature } from "../../types";
+import { TIdentityGeoJSONFeature } from "../types";
 
 export type GeoJSONLayerGroupOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> = {
     map: maplibregl.Map;

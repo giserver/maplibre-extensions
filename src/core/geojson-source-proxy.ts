@@ -1,5 +1,5 @@
 import { uuidv7 } from 'uuidv7';
-import { TIdentityGeoJSONFeature } from "../types";
+import { TIdentityGeoJSONFeature } from "./types";
 import { Events } from './event';
 
 
@@ -51,6 +51,10 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
 
     where(predicate: (feature: TIdentityGeoJSONFeature) => boolean) {
         return Array.from(this.data.values()).concat(Array.from(this.hiddenData.values())).filter(predicate);
+    }
+
+    all(){
+        return Array.from(this.data.values()).concat(Array.from(this.hiddenData.values()));
     }
 
     update(...featrues: TFeature[]) {
@@ -185,5 +189,3 @@ export class GeoJSONSourceProxy<TFeature extends TIdentityGeoJSONFeature = TIden
         return features;
     }
 }
-
-export default GeoJSONSourceProxy;

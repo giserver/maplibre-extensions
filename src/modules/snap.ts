@@ -2,80 +2,124 @@ import * as turf from "@turf/turf";
 
 type TNearestPointType = "line-above" | "line-mid" | "vertex";
 
-const nearest_point_finders: Record<TNearestPointType, (features: GeoJSON.Feature[], mousePosition: GeoJSON.Position) => GeoJSON.Position | undefined> = {
-    'line-mid': (features, mousePosition) => {
+function distance(p1: GeoJSON.Position, p2: GeoJSON.Position) {
+    return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+}
+
+const nearest_point_finders: Record<TNearestPointType, (
+    features: GeoJSON.Feature[],
+    mousePosition: GeoJSON.Position,
+    project: (point: GeoJSON.Position) => GeoJSON.Position,
+    unproject: (point: GeoJSON.Position) => GeoJSON.Position,
+    tolerance: number) => GeoJSON.Position | undefined> = {
+
+    'line-mid': (features, mousePosition, project, unproject, tolerance) => {
         let minDistance = Number.MAX_VALUE;
         let nearestPoint: GeoJSON.Position | undefined;
         const midPoints = new Array<GeoJSON.Position>();
+        mousePosition = project(mousePosition);
 
         features.forEach(f => {
             turf.segmentEach(f, (segment) => {
                 if (segment) {
-                    const midPoint = turf.midpoint(segment.geometry.coordinates[0], segment.geometry.coordinates[1]);
-                    midPoints.push(midPoint.geometry.coordinates);
+                    const p1 = project(segment.geometry.coordinates[0]);
+                    const p2 = project(segment.geometry.coordinates[1]);
+                    const midPoint = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+
+                    midPoints.push(midPoint);
                 }
             });
         });
 
         midPoints.forEach(p => {
-            const distance = turf.distance(mousePosition, p, { units: 'meters' });
-            if (distance < minDistance) {
+            const d = distance(mousePosition, p);
+            if (d < minDistance) {
                 nearestPoint = p;
-                minDistance = distance;
+                minDistance = d;
             }
         });
 
-        return nearestPoint;
+        if (nearestPoint && minDistance <= tolerance) {
+            return unproject(nearestPoint);
+        }
+
     },
-    "vertex": (features, mousePosition) => {
+    "vertex": (features, mousePosition, project, unproject, tolerance) => {
         let minDistance = Number.MAX_VALUE;
         let nearestPoint: GeoJSON.Position | undefined;
+        mousePosition = project(mousePosition);
 
         turf.coordEach({ type: "FeatureCollection", features }, coord => {
-            const distance = turf.distance(mousePosition, coord, { units: 'meters' });
-            if (distance < minDistance) {
+            coord = project(coord);
+            const d = distance(mousePosition, coord);
+            if (d < minDistance) {
                 nearestPoint = coord;
-                minDistance = distance;
+                minDistance = d;
             }
         });
 
-        return nearestPoint;
+        if (nearestPoint && minDistance <= tolerance) {
+            return unproject(nearestPoint);
+        }
     },
-    "line-above": (features, mousePosition) => {
+    "line-above": (features, mousePosition, project, unproject, tolerance) => {
         let minDistance = Number.MAX_VALUE;
         let nearestPoint: GeoJSON.Position | undefined;
+        mousePosition = project(mousePosition);
 
-        const lines = new Array<GeoJSON.LineString | GeoJSON.MultiLineString>();
+        function closestPointOnLine(point: GeoJSON.Position, line: [GeoJSON.Position, GeoJSON.Position]): GeoJSON.Position {
+            const A = point[0] - line[0][0];
+            const B = point[1] - line[0][1];
+            const C = line[1][0] - line[0][0];
+            const D = line[1][1] - line[0][1];
 
-        // 获取线,包括polygon 轮廓线
-        features.forEach(feature => {
-            const type = feature.geometry.type;
-            if (type === 'LineString' || type === "MultiLineString") {
-                lines.push(feature.geometry);
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+
+            if (lenSq !== 0) {
+                param = dot / lenSq;
             }
-            else if (type === "Polygon" || type === "MultiPolygon") {
-                const ls = turf.polygonToLine(feature.geometry);
 
-                if (ls.type === 'FeatureCollection') {
-                    ls.features.forEach(l => lines.push(l.geometry))
-                } else {
-                    lines.push(ls.geometry);
+            let xx: number, yy: number;
+
+            if (param < 0) {
+                // 最近点是起点
+                xx = line[0][0];
+                yy = line[0][1];
+            } else if (param > 1) {
+                // 最近点是终点
+                xx = line[1][0];
+                yy = line[1][0];
+            } else {
+                // 最近点在线上
+                xx = line[0][0] + param * C;
+                yy = line[0][1] + param * D;
+            }
+
+            return [xx, yy];
+        }
+
+        features.forEach(f => {
+            turf.segmentEach(f, segment => {
+                if (!segment) return;
+
+                const p1 = project(segment.geometry.coordinates[0]);
+                const p2 = project(segment.geometry.coordinates[1]);
+
+                const nearest = closestPointOnLine(mousePosition, [p1, p2]);
+                const d = distance(mousePosition, nearest);
+
+                if (d < minDistance) {
+                    nearestPoint = nearest;
+                    minDistance = d;
                 }
-            }
+            });
         });
 
-        lines.forEach(line => {
-            const nearest = turf.nearestPointOnLine(line, mousePosition);
-
-            const distance = turf.distance(mousePosition, nearest, { units: 'meters' });
-
-            if (distance < minDistance) {
-                nearestPoint = nearest.geometry.coordinates;
-                minDistance = distance;
-            }
-        });
-
-        return nearestPoint;
+        if (nearestPoint && minDistance <= tolerance) {
+            return unproject(nearestPoint);
+        }
     }
 }
 
@@ -141,16 +185,16 @@ export class SnapManager {
                 nearestPointType = type as TNearestPointType;
 
                 const fun = nearest_point_finders[nearestPointType];
-                const p = fun(renderedFeatures, e.lngLat.toArray());
+                nearestPoint = fun(renderedFeatures, e.lngLat.toArray(), x => {
+                    const nx = this.map.project(x as [number, number]);
+                    return [nx.x, nx.y]
+                }, x => {
+                    const nx = this.map.unproject(x as [number, number]);
+                    return [nx.lng, nx.lat];
+                }, this.tolerance);
 
-                if (p) {
-                    const screenP = this.map.project(p as [number, number]);
-                    const screenDistance = this.distance(e.point.x, e.point.y, screenP.x, screenP.y);
-
-                    if (screenDistance <= this.tolerance) {
-                        nearestPoint = p;
-                        break;
-                    }
+                if (nearestPoint) {
+                    break;
                 }
             }
 
@@ -186,10 +230,6 @@ export class SnapManager {
     toggleEnable() {
         this.enable = !this.enable;
         this._snapHtmlElement.style.display = this.enable ? "block" : "none";
-    }
-
-    private distance(x1: number, y1: number, x2: number, y2: number) {
-        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
 
     private updateMapMouseEvent(e: any) {

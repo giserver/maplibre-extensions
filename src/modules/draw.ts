@@ -5,7 +5,7 @@ import * as turf from '@turf/turf';
 /**
  * 图层图形类型
  */
-export type DrawGeometryType = "Point" | "LineString" | "Polygon" | "Rectangle2" | "Rectangle3";
+export type DrawGeometryType = "Point" | "LineString" | "Polygon" | "Rectangle2" | "Rectangle3" | "Circle";
 
 export interface DrawManagerOptions {
     once?: boolean;
@@ -113,6 +113,7 @@ export class DrawManager extends Events.EventManager<{
 
     private _drawing = false;
     private currentFeatureId: string | undefined;
+    private currentType: DrawGeometryType | undefined;
 
     private stopFunc?(): void;
     private escOnce: (e: KeyboardEvent) => void;
@@ -141,7 +142,7 @@ export class DrawManager extends Events.EventManager<{
         });
 
         this.sourceProxy.on("clear", async () => {
-            this.clearPolygonSubline();
+            this.setPolygonSublineData([]);
         });
 
         //#endregion
@@ -149,14 +150,8 @@ export class DrawManager extends Events.EventManager<{
         this.escOnce = (e: KeyboardEvent) => {
             // 如果按下esc
             if (e.key.toLocaleLowerCase() === "escape") {
-                // 如果当前绘制数据删除
-                if (this.currentFeatureId) {
-                    this.sourceProxy.delete(this.currentFeatureId);
-                    this.currentFeatureId = undefined;
-                }
-
-                // 清除临时数据
-                this.clearPolygonSubline();
+                if (this.currentType)
+                    this.start(this.currentType)
             }
         };
     }
@@ -171,9 +166,10 @@ export class DrawManager extends Events.EventManager<{
         else if (mode === "Polygon") this.stopFunc = this.drawPolygon();
         else if (mode === 'Rectangle2') this.stopFunc = this.drawRectangle(2);
         else if (mode === 'Rectangle3') this.stopFunc = this.drawRectangle(3);
+        else if (mode === 'Circle') this.stopFunc = this.drawCircle();
 
+        this.currentType = mode;
         this.map.getCanvas().style.cursor = "crosshair";
-
         this.map.getCanvas().addEventListener("keydown", this.escOnce);
     }
 
@@ -198,12 +194,12 @@ export class DrawManager extends Events.EventManager<{
 
     clear(): void {
         this.sourceProxy.clear();
-        this.clearPolygonSubline();
+        this.setPolygonSublineData([]);
     }
 
-    private clearPolygonSubline() {
+    private setPolygonSublineData(features: GeoJSON.Feature[]) {
         (this.map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource)
-            .setData({ type: 'FeatureCollection', features: [] });
+            .setData({ type: 'FeatureCollection', features });
     }
 
     private drawPoint() {
@@ -405,7 +401,7 @@ export class DrawManager extends Events.EventManager<{
                 if (this.options.once) this.stop();
             }
 
-            this.clearPolygonSubline();
+            this.setPolygonSublineData([]);
         };
 
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
@@ -418,12 +414,12 @@ export class DrawManager extends Events.EventManager<{
 
             if (coords.length === 2) {
                 setTimeout(() => {
-                    (map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource).setData({
+                    this.setPolygonSublineData([{
                         type: "Feature",
                         geometry: { type: "LineString", coordinates: coords },
                         properties: {},
-                    });
-                }, 50);
+                    }]);
+                }, 0);
             }
 
             if (coords.length > 1) coords.pop();
@@ -453,9 +449,7 @@ export class DrawManager extends Events.EventManager<{
                 this.sourceProxy.delete(feature.properties.id);
                 this.currentFeatureId = undefined;
 
-                setTimeout(() => {
-                    this.clearPolygonSubline();
-                }, 50);
+                this.setPolygonSublineData([]);
             } else {
                 coords.pop();
                 if (coords.length === 3) coords.pop(); // 辅助线 _line_addion 更新
@@ -486,7 +480,7 @@ export class DrawManager extends Events.EventManager<{
             map.off("click", clickHandler);
             map.off("dblclick", doubleClickHandler);
 
-            this.clearPolygonSubline();
+            this.setPolygonSublineData([]);
 
             this.map.getCanvas().removeEventListener("keydown", backKeyHandler);
         };
@@ -540,6 +534,8 @@ export class DrawManager extends Events.EventManager<{
 
                 if (stepCount === step - 1) {
                     // 绘制完成
+                    map.off("mousemove", mouseMoveHandler);
+
                     const polygon = step === 2 ? createRectangle(coords[0], point) : createRectangle(coords[0], coords[1], point);
                     feature.geometry = polygon;
                     this.sourceProxy.update(feature);
@@ -547,9 +543,9 @@ export class DrawManager extends Events.EventManager<{
                     // 处理完成状态
                     this.currentFeatureId = undefined;
                     stepCount = 0;
-                    map.off("mousemove", mouseMoveHandler);
+
                     this.fire("drawed", { target: this, feature });
-                    this.clearPolygonSubline();
+                    this.setPolygonSublineData([]);
                 } else {
                     coords.splice(coords.length - 1, 0, point);
                     stepCount++;
@@ -598,18 +594,83 @@ export class DrawManager extends Events.EventManager<{
                         coords[1] = point;
                     }
 
-                    setTimeout(() => {
-                        (map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource).setData({
-                            type: "Feature",
-                            geometry: { type: "LineString", coordinates: coords },
-                            properties: {},
-                        });
-                    }, 50);
+                    (map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource).setData({
+                        type: "Feature",
+                        geometry: { type: "LineString", coordinates: coords },
+                        properties: {},
+                    });
                 }
             }
 
             this.sourceProxy.update(feature);
         };
+
+        map.on("click", clickHandler);
+
+        return () => {
+            map.off("mousemove", mouseMoveHandler);
+            map.off("click", clickHandler);
+        }
+    }
+
+    private drawCircle() {
+        const map = this.map;
+        let firstPoint: Array<number> | undefined;
+
+        function createCircle(p1: GeoJSON.Position, p2: GeoJSON.Position): GeoJSON.Polygon {
+            const length = turf.distance(p1, p2, { units: 'kilometers' });
+            return turf.circle(p1, length, { steps: 100, units: 'kilometers' }).geometry;
+        }
+
+        const clickHandler = (e: maplibregl.MapMouseEvent) => {
+            const point = [e.lngLat.lng, e.lngLat.lat];
+
+            if (firstPoint && this.currentFeatureId) {
+                map.off("mousemove", mouseMoveHandler);
+                const circle = createCircle(firstPoint, point);
+
+                const result = this.sourceProxy.update({
+                    type: "Feature",
+                    geometry: circle,
+                    properties: {
+                        id: this.currentFeatureId
+                    }
+                });
+
+                this.fire("drawed", { target: this, feature: result.updateFeatures[0]! });
+                firstPoint = undefined;
+                this.currentFeatureId = undefined;
+                this.setPolygonSublineData([]);
+            } else {
+                firstPoint = point;
+                this.currentFeatureId = uuidv7();
+                map.on("mousemove", mouseMoveHandler);
+            }
+        };
+
+        const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
+            if (!firstPoint || !this.currentFeatureId) return;
+            const point = [e.lngLat.lng, e.lngLat.lat];
+
+            const circle = createCircle(firstPoint, point);
+
+            this.setPolygonSublineData([{
+                type: "Feature",
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [firstPoint, point]
+                },
+                properties: {}
+            }]);
+
+            this.sourceProxy.update({
+                type: "Feature",
+                geometry: circle,
+                properties: {
+                    id: this.currentFeatureId
+                }
+            });
+        }
 
         map.on("click", clickHandler);
 

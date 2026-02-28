@@ -13,6 +13,8 @@
     <button @click="handleButtonClick('Point')">画点</button>
     <button @click="handleButtonClick('LineString')">画线</button>
     <button @click="handleButtonClick('Polygon')">画面</button>
+    <button @click="handleButtonClick('Rectangle2')">画矩形2</button>
+    <button @click="handleButtonClick('Rectangle3')">画矩形3</button>
     <button @click="handleButtonClick('stop')">停止</button>
     <button @click="handleButtonClick('clear')">清除</button>
   </div>

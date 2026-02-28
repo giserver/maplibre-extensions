@@ -1,11 +1,11 @@
 import { uuidv7 } from 'uuidv7';
-import { GeoJSONSourceProxy } from '../core';
-import { Events } from '../core';
+import { GeoJSONSourceProxy, Events } from '../core';
+import * as turf from '@turf/turf';
 
 /**
  * 图层图形类型
  */
-export type DrawGeometryType = "Point" | "LineString" | "Polygon";
+export type DrawGeometryType = "Point" | "LineString" | "Polygon" | "Rectangle2" | "Rectangle3";
 
 export interface DrawManagerOptions {
     once?: boolean;
@@ -169,6 +169,8 @@ export class DrawManager extends Events.EventManager<{
         if (mode === "Point") this.stopFunc = this.drawPoint();
         else if (mode === "LineString") this.stopFunc = this.drawLine();
         else if (mode === "Polygon") this.stopFunc = this.drawPolygon();
+        else if (mode === 'Rectangle2') this.stopFunc = this.drawRectangle(2);
+        else if (mode === 'Rectangle3') this.stopFunc = this.drawRectangle(3);
 
         this.map.getCanvas().style.cursor = "crosshair";
 
@@ -232,7 +234,7 @@ export class DrawManager extends Events.EventManager<{
     private drawLine() {
         const map = this.map;
 
-        const clickHandler = (e: any) => {
+        const clickHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
             if (this.currentFeatureId) {
@@ -284,7 +286,7 @@ export class DrawManager extends Events.EventManager<{
             }
         };
 
-        const mouseMoveHandler = (e: any) => {
+        const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
             const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
@@ -300,7 +302,7 @@ export class DrawManager extends Events.EventManager<{
             this.sourceProxy.update(feature);
         };
 
-        const rightClickHandler = (e: any) => {
+        const rightClickHandler = (e: maplibregl.MapMouseEvent) => {
             const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.LineString;
             if (!feature || !geometry) return;
@@ -347,7 +349,7 @@ export class DrawManager extends Events.EventManager<{
     private drawPolygon() {
         const map = this.map;
 
-        const clickHandler = (e: any) => {
+        const clickHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
             // 判断是否已经落笔
@@ -406,7 +408,7 @@ export class DrawManager extends Events.EventManager<{
             this.clearPolygonSubline();
         };
 
-        const mouseMoveHandler = (e: any) => {
+        const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
             const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.Polygon;
             if (!feature || !geometry) return;
@@ -437,7 +439,7 @@ export class DrawManager extends Events.EventManager<{
             this.sourceProxy.update(feature);
         };
 
-        const rightClickHandler = (e: any) => {
+        const rightClickHandler = (e: maplibregl.MapMouseEvent) => {
             const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.Polygon;
             if (!feature || !geometry) return;
@@ -488,5 +490,132 @@ export class DrawManager extends Events.EventManager<{
 
             this.map.getCanvas().removeEventListener("keydown", backKeyHandler);
         };
+    }
+
+    private drawRectangle(step: 2 | 3) {
+        const map = this.map;
+        let stepCount = 0;
+
+        function createRectangle(p1: GeoJSON.Position, p2: GeoJSON.Position, p3?: GeoJSON.Position): GeoJSON.Polygon {
+            if (p3) {
+                p1 = turf.projection.toMercator(p1);
+                p2 = turf.projection.toMercator(p2);
+                p3 = turf.projection.toMercator(p3);
+
+
+                const vectorP1P2 = [p2[0] - p1[0], p2[1] - p1[1]];
+                const vectorP1P3 = [p3[0] - p1[0], p3[1] - p1[1]];
+
+                const lengthP1P2 = Math.sqrt(vectorP1P2[0] ** 2 + vectorP1P2[1] ** 2);
+                const unitP1P2 = [vectorP1P2[0] / lengthP1P2, vectorP1P2[1] / lengthP1P2];
+
+                // 法向量
+                const unitNormal = [-unitP1P2[1], unitP1P2[0]];
+
+                // 计算p3在p1p2上的投影长度
+                const projectionLength = vectorP1P3[0] * unitNormal[0] + vectorP1P3[1] * unitNormal[1];
+
+                // 计算法线方向上的位移
+                const normalVector = [unitNormal[0] * projectionLength, unitNormal[1] * projectionLength];
+
+                return {
+                    type: 'Polygon',
+                    coordinates: [[p1, p2, [p2[0] + normalVector[0], p2[1] + normalVector[1]], [p1[0] + normalVector[0], p1[1] + normalVector[1]], p1].map(x => turf.projection.toWgs84(x))]
+                }
+
+            } else {
+                return {
+                    type: 'Polygon',
+                    coordinates: [[p1, [p1[0], p2[1]], p2, [p2[0], p1[1]], p1]],
+                }
+            }
+        }
+
+        const clickHandler = (e: maplibregl.MapMouseEvent) => {
+            const point = [e.lngLat.lng, e.lngLat.lat];
+
+            if (this.currentFeatureId) {
+                const feature = this.sourceProxy.find(this.currentFeatureId)!;
+                const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0];
+
+                if (stepCount === step - 1) {
+                    // 绘制完成
+                    const polygon = step === 2 ? createRectangle(coords[0], point) : createRectangle(coords[0], coords[1], point);
+                    feature.geometry = polygon;
+                    this.sourceProxy.update(feature);
+
+                    // 处理完成状态
+                    this.currentFeatureId = undefined;
+                    stepCount = 0;
+                    map.off("mousemove", mouseMoveHandler);
+                    this.fire("drawed", { target: this, feature });
+                    this.clearPolygonSubline();
+                } else {
+                    coords.splice(coords.length - 1, 0, point);
+                    stepCount++;
+                    this.sourceProxy.update(feature);
+                }
+            } else {
+                // 第一次点击，记录第一个点
+                this.currentFeatureId = uuidv7();
+
+                this.sourceProxy.update({
+                    type: "Feature",
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [[point, point]],
+                    },
+                    properties: {
+                        id: this.currentFeatureId,
+                    },
+                });
+
+                map.on("mousemove", mouseMoveHandler);
+                stepCount = 1;
+            }
+        };
+
+        const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
+            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const coords = (feature?.geometry as GeoJSON.Polygon).coordinates[0];
+            if (!feature || !coords) return;
+
+            const point = [e.lngLat.lng, e.lngLat.lat];
+
+            if (step === 2) {
+                const polygon = createRectangle(coords[0], point);
+                feature.geometry = polygon;
+            } else {
+                if (stepCount === step - 1) {
+                    // 形成矩形
+                    const polygon = createRectangle(coords[0], coords[1], point);
+                    feature.geometry = polygon;
+                } else {
+                    // 形成两条线
+                    if (coords.length === 2) {
+                        coords.splice(1, 0, point);
+                    } else {
+                        coords[1] = point;
+                    }
+
+                    setTimeout(() => {
+                        (map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource).setData({
+                            type: "Feature",
+                            geometry: { type: "LineString", coordinates: coords },
+                            properties: {},
+                        });
+                    }, 50);
+                }
+            }
+
+            this.sourceProxy.update(feature);
+        };
+
+        map.on("click", clickHandler);
+
+        return () => {
+            map.off("mousemove", mouseMoveHandler);
+            map.off("click", clickHandler);
+        }
     }
 }

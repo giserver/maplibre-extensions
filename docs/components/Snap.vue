@@ -23,8 +23,7 @@ function handleMapLoaded(map: maplibregl.Map) {
   drawManager = new DrawManager({ sourceProxy });
 
   snapManager.featureTranslator = () => {
-    const features = sourceProxy.all();
-    features.pop();
+    const features = sourceProxy.where(x=>x.properties.id !== drawManager.currentFeatureId);
     return features;
   };
 

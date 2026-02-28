@@ -112,7 +112,7 @@ export class DrawManager extends Events.EventManager<{
     readonly sourceProxy: GeoJSONSourceProxy;
 
     private _drawing = false;
-    private currentFeatureId: string | undefined;
+    private _currentFeatureId: string | undefined;
     private currentType: DrawGeometryType | undefined;
 
     private stopFunc?(): void;
@@ -120,6 +120,10 @@ export class DrawManager extends Events.EventManager<{
 
     get drawing(): boolean {
         return this._drawing;
+    }
+
+    get currentFeatureId() {
+        return this._currentFeatureId;
     }
 
     /**
@@ -178,9 +182,9 @@ export class DrawManager extends Events.EventManager<{
             this.map.doubleClickZoom.enable();
         }
 
-        if (this.currentFeatureId) {
-            this.sourceProxy.delete(this.currentFeatureId);
-            this.currentFeatureId = undefined;
+        if (this._currentFeatureId) {
+            this.sourceProxy.delete(this._currentFeatureId);
+            this._currentFeatureId = undefined;
         }
 
         this.stopFunc?.();
@@ -233,15 +237,15 @@ export class DrawManager extends Events.EventManager<{
         const clickHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
-            if (this.currentFeatureId) {
-                const feature = this.sourceProxy.find(this.currentFeatureId)!;
+            if (this._currentFeatureId) {
+                const feature = this.sourceProxy.find(this._currentFeatureId)!;
                 const geometry = feature.geometry as GeoJSON.LineString;
                 if (!geometry.coordinates[geometry.coordinates.length - 2]) return;
 
                 geometry.coordinates.push(point);
                 this.sourceProxy.update(feature);
             } else {
-                this.currentFeatureId = uuidv7();
+                this._currentFeatureId = uuidv7();
                 this.sourceProxy.update({
                     type: "Feature",
                     geometry: {
@@ -249,7 +253,7 @@ export class DrawManager extends Events.EventManager<{
                         coordinates: [point],
                     },
                     properties: {
-                        id: this.currentFeatureId,
+                        id: this._currentFeatureId,
                     },
                 });
 
@@ -262,11 +266,11 @@ export class DrawManager extends Events.EventManager<{
             map.off("mousemove", mouseMoveHandler);
             map.off("contextmenu", rightClickHandler);
 
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.LineString;
             if (!feature || !geometry) return;
 
-            this.currentFeatureId = undefined;
+            this._currentFeatureId = undefined;
 
             // 排除最后一个点和动态点
             geometry.coordinates.pop();
@@ -285,7 +289,7 @@ export class DrawManager extends Events.EventManager<{
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.LineString;
             if (!feature || !geometry) return;
 
@@ -299,7 +303,7 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const rightClickHandler = (e: maplibregl.MapMouseEvent) => {
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.LineString;
             if (!feature || !geometry) return;
 
@@ -307,7 +311,7 @@ export class DrawManager extends Events.EventManager<{
                 // 只存在第一个点和动态点直接删除图形
                 this.sourceProxy.delete(feature.properties.id);
 
-                this.currentFeatureId = undefined;
+                this._currentFeatureId = undefined;
                 map.off("mousemove", mouseMoveHandler);
                 map.off("contextmenu", rightClickHandler);
             } else {
@@ -317,8 +321,8 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const backKeyHandler = (e: KeyboardEvent) => {
-            if (e.key.toLowerCase() === "backspace" && this.currentFeatureId) {
-                const currentFeature = this.sourceProxy.find(this.currentFeatureId);
+            if (e.key.toLowerCase() === "backspace" && this._currentFeatureId) {
+                const currentFeature = this.sourceProxy.find(this._currentFeatureId);
                 const lastCoord = (currentFeature!.geometry as GeoJSON.LineString).coordinates.slice(-1)[0]!;
                 rightClickHandler({
                     lngLat: {
@@ -349,8 +353,8 @@ export class DrawManager extends Events.EventManager<{
             const point = [e.lngLat.lng, e.lngLat.lat];
 
             // 判断是否已经落笔
-            if (this.currentFeatureId) {
-                const feature = this.sourceProxy.find(this.currentFeatureId)!;
+            if (this._currentFeatureId) {
+                const feature = this.sourceProxy.find(this._currentFeatureId)!;
                 const geometry = feature.geometry as GeoJSON.Polygon;
                 const coords = geometry.coordinates[0];
                 if (coords.length > 2) coords.pop(); //删除第一个点
@@ -359,7 +363,7 @@ export class DrawManager extends Events.EventManager<{
 
                 this.sourceProxy.update(feature);
             } else {
-                this.currentFeatureId = uuidv7();
+                this._currentFeatureId = uuidv7();
                 this.sourceProxy.update({
                     type: "Feature",
                     geometry: {
@@ -367,7 +371,7 @@ export class DrawManager extends Events.EventManager<{
                         coordinates: [[point]],
                     },
                     properties: {
-                        id: this.currentFeatureId,
+                        id: this._currentFeatureId,
                     },
                 });
 
@@ -380,11 +384,11 @@ export class DrawManager extends Events.EventManager<{
             map.off("mousemove", mouseMoveHandler);
             map.off("contextmenu", rightClickHandler);
 
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.Polygon;
             if (!feature || !geometry) return;
 
-            this.currentFeatureId = undefined;
+            this._currentFeatureId = undefined;
 
             const coords = geometry.coordinates[0];
             coords.pop();
@@ -405,7 +409,7 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.Polygon;
             if (!feature || !geometry) return;
 
@@ -436,7 +440,7 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const rightClickHandler = (e: maplibregl.MapMouseEvent) => {
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const geometry = feature?.geometry as GeoJSON.Polygon;
             if (!feature || !geometry) return;
 
@@ -447,7 +451,7 @@ export class DrawManager extends Events.EventManager<{
                 map.off("mousemove", mouseMoveHandler);
                 map.off("contextmenu", rightClickHandler);
                 this.sourceProxy.delete(feature.properties.id);
-                this.currentFeatureId = undefined;
+                this._currentFeatureId = undefined;
 
                 this.setPolygonSublineData([]);
             } else {
@@ -458,8 +462,8 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const backKeyHandler = (e: KeyboardEvent) => {
-            if (e.key.toLowerCase() === "backspace" && this.currentFeatureId) {
-                const currentFeature = this.sourceProxy.find(this.currentFeatureId);
+            if (e.key.toLowerCase() === "backspace" && this._currentFeatureId) {
+                const currentFeature = this.sourceProxy.find(this._currentFeatureId);
                 const lastCoord = (currentFeature!.geometry as GeoJSON.Polygon).coordinates[0].slice(-2)[0]!;
                 rightClickHandler({
                     lngLat: {
@@ -528,8 +532,8 @@ export class DrawManager extends Events.EventManager<{
         const clickHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
-            if (this.currentFeatureId) {
-                const feature = this.sourceProxy.find(this.currentFeatureId)!;
+            if (this._currentFeatureId) {
+                const feature = this.sourceProxy.find(this._currentFeatureId)!;
                 const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0];
 
                 if (stepCount === step - 1) {
@@ -541,7 +545,7 @@ export class DrawManager extends Events.EventManager<{
                     this.sourceProxy.update(feature);
 
                     // 处理完成状态
-                    this.currentFeatureId = undefined;
+                    this._currentFeatureId = undefined;
                     stepCount = 0;
 
                     this.fire("drawed", { target: this, feature });
@@ -553,7 +557,7 @@ export class DrawManager extends Events.EventManager<{
                 }
             } else {
                 // 第一次点击，记录第一个点
-                this.currentFeatureId = uuidv7();
+                this._currentFeatureId = uuidv7();
 
                 this.sourceProxy.update({
                     type: "Feature",
@@ -562,7 +566,7 @@ export class DrawManager extends Events.EventManager<{
                         coordinates: [[point, point]],
                     },
                     properties: {
-                        id: this.currentFeatureId,
+                        id: this._currentFeatureId,
                     },
                 });
 
@@ -572,7 +576,7 @@ export class DrawManager extends Events.EventManager<{
         };
 
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
-            const feature = this.sourceProxy.find(this.currentFeatureId ?? "");
+            const feature = this.sourceProxy.find(this._currentFeatureId ?? "");
             const coords = (feature?.geometry as GeoJSON.Polygon).coordinates[0];
             if (!feature || !coords) return;
 
@@ -625,7 +629,7 @@ export class DrawManager extends Events.EventManager<{
         const clickHandler = (e: maplibregl.MapMouseEvent) => {
             const point = [e.lngLat.lng, e.lngLat.lat];
 
-            if (firstPoint && this.currentFeatureId) {
+            if (firstPoint && this._currentFeatureId) {
                 map.off("mousemove", mouseMoveHandler);
                 const circle = createCircle(firstPoint, point);
 
@@ -633,23 +637,23 @@ export class DrawManager extends Events.EventManager<{
                     type: "Feature",
                     geometry: circle,
                     properties: {
-                        id: this.currentFeatureId
+                        id: this._currentFeatureId
                     }
                 });
 
                 this.fire("drawed", { target: this, feature: result.updateFeatures[0]! });
                 firstPoint = undefined;
-                this.currentFeatureId = undefined;
+                this._currentFeatureId = undefined;
                 this.setPolygonSublineData([]);
             } else {
                 firstPoint = point;
-                this.currentFeatureId = uuidv7();
+                this._currentFeatureId = uuidv7();
                 map.on("mousemove", mouseMoveHandler);
             }
         };
 
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
-            if (!firstPoint || !this.currentFeatureId) return;
+            if (!firstPoint || !this._currentFeatureId) return;
             const point = [e.lngLat.lng, e.lngLat.lat];
 
             const circle = createCircle(firstPoint, point);
@@ -667,7 +671,7 @@ export class DrawManager extends Events.EventManager<{
                 type: "Feature",
                 geometry: circle,
                 properties: {
-                    id: this.currentFeatureId
+                    id: this._currentFeatureId
                 }
             });
         }

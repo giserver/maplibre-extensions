@@ -20,20 +20,25 @@
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import * as maplibregl from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const props = defineProps<{
+  onMapOptionsInit?: (
+    options: Omit<maplibregl.MapOptions, "container">,
+  ) => void;
   onMapInit?: (map: maplibregl.Map) => void;
   onMapLoaded?: (map: maplibregl.Map) => void;
 }>();
 
 onMounted(() => {
-  const map = new maplibregl.Map({
+  const mapOptions: maplibregl.MapOptions = {
     container: "maplibre-container",
     style: "https://demotiles.maplibre.org/style.json",
     attributionControl: false,
-  });
+  };
+  if (props.onMapOptionsInit) props.onMapOptionsInit(mapOptions);
+  const map = new maplibregl.Map(mapOptions);
 
   props.onMapInit?.(map);
 
@@ -64,8 +69,8 @@ onMounted(() => {
 }
 
 #controls > div {
-    width: fit-content;
-    position: absolute;
+  width: fit-content;
+  position: absolute;
 }
 
 .top {

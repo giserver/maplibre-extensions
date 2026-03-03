@@ -17,7 +17,7 @@
     }
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vitepress dev docs",
     "build": "tsc && vite build",
     "test": "vitest",
     "docs:dev": "vitepress dev docs",

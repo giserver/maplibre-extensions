@@ -30,7 +30,8 @@ export default {
                 { text: "绘制", link: "draw" },
                 { text: "测量", link: "measure" },
                 { text: "捕捉", link: "snap" },
-                { text: "顶点编辑", link: "vertex" }
+                { text: "顶点编辑", link: "vertex" },
+                { text: "mapbox 映射", link: "mapbox" }
             ]
         }]
     }

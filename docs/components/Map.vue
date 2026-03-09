@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+import { adaptStyleLanguage } from "../../src";
 import { onMounted } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -29,18 +30,26 @@ const props = defineProps<{
   ) => void;
   onMapInit?: (map: maplibregl.Map) => void;
   onMapLoaded?: (map: maplibregl.Map) => void;
+  onMapStyleLoaded?: (map: maplibregl.Map) => void;
 }>();
 
 onMounted(() => {
   const mapOptions: maplibregl.MapOptions = {
     container: "maplibre-container",
-    style: "https://demotiles.maplibre.org/style.json",
+    style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
     attributionControl: false,
   };
   if (props.onMapOptionsInit) props.onMapOptionsInit(mapOptions);
   const map = new maplibregl.Map(mapOptions);
 
   props.onMapInit?.(map);
+
+  map.on("style.load", () => {
+    props.onMapStyleLoaded?.(map);
+    map.setStyle(adaptStyleLanguage(map.getStyle(), "zh-Hans", {
+      fieldMake: lang=> "name:" + lang
+    }));
+  });
 
   map.on("load", () => {
     props.onMapLoaded?.(map);

@@ -11,11 +11,6 @@ let snapManager: SnapManager;
 let drawManager: DrawManager;
 
 function handleMapLoaded(map: maplibregl.Map) {
-  map.easeTo({
-    center: [120.62129047101891, 31.312003336405187],
-    zoom: 18,
-  });
-
   snapManager = new SnapManager({
     map,
   });

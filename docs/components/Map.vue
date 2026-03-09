@@ -38,6 +38,8 @@ onMounted(() => {
     container: "maplibre-container",
     style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
     attributionControl: false,
+    center: [120.62129047101891, 31.312003336405187],
+    zoom: 18
   };
   if (props.onMapOptionsInit) props.onMapOptionsInit(mapOptions);
   const map = new maplibregl.Map(mapOptions);

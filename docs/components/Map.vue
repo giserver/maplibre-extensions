@@ -14,32 +14,38 @@
         <slot name="bottom-right"></slot>
       </div>
     </div>
-    <div id="maplibre-container"></div>
+    <div :id="containerId" style="width: 100%; height: 750px"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { adaptStyleLanguage } from "../../src";
+import { Style } from "../../src";
 import { onMounted } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-const props = defineProps<{
-  onMapOptionsInit?: (
-    options: Omit<maplibregl.MapOptions, "container">,
-  ) => void;
-  onMapInit?: (map: maplibregl.Map) => void;
-  onMapLoaded?: (map: maplibregl.Map) => void;
-  onMapStyleLoaded?: (map: maplibregl.Map) => void;
-}>();
+const props = withDefaults(
+  defineProps<{
+    containerId?: string;
+    onMapOptionsInit?: (
+      options: Omit<maplibregl.MapOptions, "container">,
+    ) => void;
+    onMapInit?: (map: maplibregl.Map) => void;
+    onMapLoaded?: (map: maplibregl.Map) => void;
+    onMapStyleLoaded?: (map: maplibregl.Map) => void;
+  }>(),
+  {
+    containerId: "maplibre-container",
+  },
+);
 
 onMounted(() => {
   const mapOptions: maplibregl.MapOptions = {
-    container: "maplibre-container",
+    container: props.containerId,
     style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
     attributionControl: false,
     center: [120.62129047101891, 31.312003336405187],
-    zoom: 18
+    zoom: 18,
   };
   if (props.onMapOptionsInit) props.onMapOptionsInit(mapOptions);
   const map = new maplibregl.Map(mapOptions);
@@ -48,23 +54,21 @@ onMounted(() => {
 
   map.on("style.load", () => {
     props.onMapStyleLoaded?.(map);
-    map.setStyle(adaptStyleLanguage(map.getStyle(), "zh-Hans", {
-      fieldMake: lang=> "name:" + lang
-    }));
   });
 
   map.on("load", () => {
+    map.setStyle(
+      Style.adaptStyleLanguage(map.getStyle(), "zh-Hans", {
+        fieldMake: (lang) => "name:" + lang,
+      }),
+    );
+
     props.onMapLoaded?.(map);
   });
 });
 </script>
 
 <style scoped>
-#maplibre-container {
-  width: 100%;
-  height: 750px;
-}
-
 #controls {
   position: absolute;
   top: 0;
@@ -82,6 +86,13 @@ onMounted(() => {
 #controls > div {
   width: fit-content;
   position: absolute;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: azure;
+  padding: 6px;
+}
+
+#controls > div:empty {
+  padding: 0px;
 }
 
 .top {

@@ -1,14 +1,11 @@
 <template>
-  <Map
-    @map-options-init="handleMapOptionsInit"
-    @map-style-loaded="handleMapStyleLoaded"
-  ></Map>
+  <Map @map-options-init="handleMapOptionsInit"></Map>
 </template>
 
 <script setup lang="ts">
 import { MapOptions } from "maplibre-gl";
 import Map from "./Map.vue";
-import { Mapbox, adaptStyleLanguage } from "../../src";
+import { Style } from "../../src";
 
 if (!import.meta.env?.VITE_MAPBOX_TOKEN) {
   const error =
@@ -20,13 +17,9 @@ if (!import.meta.env?.VITE_MAPBOX_TOKEN) {
 function handleMapOptionsInit(options: Omit<MapOptions, "container">) {
   options.validateStyle = false;
   options.style = "mapbox://styles/mapbox/streets-v12";
-  options.transformRequest = Mapbox.createRequestTransform(
+  options.transformRequest = Style.createMapboxRequestTransform(
     import.meta.env.VITE_MAPBOX_TOKEN,
   );
-}
-
-function handleMapStyleLoaded(map: maplibregl.Map) {
-  map.setStyle(adaptStyleLanguage(map.getStyle()));
 }
 </script>
 

@@ -25,7 +25,7 @@ export default {
                 { text: "测量", link: "measure" },
                 { text: "捕捉", link: "snap" },
                 { text: "顶点编辑", link: "vertex" },
-                { text: "mapbox 映射", link: "mapbox" }
+                { text: "样式", link: "style" }
             ]
         }, {
             text: "core",

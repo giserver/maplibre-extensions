@@ -54,6 +54,18 @@ export class DrawManager extends Events.EventManager<{
             filter: ["==", "$type", "LineString"],
         },
         {
+            id: this.id_layer_line_circle,
+            type: "circle",
+            source: "",
+            paint: {
+                "circle-color": "#fbb03b",
+                "circle-radius": 5,
+                "circle-stroke-color": "#fff",
+                "circle-stroke-width": 2,
+            },
+            filter: ["==", "$type", "LineString"],
+        },
+        {
             id: this.id_layer_polygon,
             type: "fill",
             source: "",
@@ -81,7 +93,19 @@ export class DrawManager extends Events.EventManager<{
                 "line-color": "#fbb03b",
                 "line-width": 2,
             },
-        }
+        },
+        {
+            id: this.id_layer_polygon_circle,
+            type: "circle",
+            source: "",
+            paint: {
+                "circle-color": "#fbb03b",
+                "circle-radius": 5,
+                "circle-stroke-color": "#fff",
+                "circle-stroke-width": 2,
+            },
+            filter: ["all", ["==", ["boolean", ['get', "circle"], false], false], ["==", ["geometry-type"], "Polygon"]],
+        },
     ];
 
     readonly map: maplibregl.Map;
@@ -615,8 +639,9 @@ export class DrawManager extends Events.EventManager<{
                     type: "Feature",
                     geometry: circle,
                     properties: {
-                        id: this._currentFeatureId
-                    }
+                        id: this._currentFeatureId,
+                        circle: true
+                    } as any
                 });
 
                 this.fire("drawed", { target: this, feature: result.updateFeatures[0]! });
@@ -649,8 +674,9 @@ export class DrawManager extends Events.EventManager<{
                 type: "Feature",
                 geometry: circle,
                 properties: {
-                    id: this._currentFeatureId
-                }
+                    id: this._currentFeatureId,
+                    circle: true
+                } as any
             });
         }
 

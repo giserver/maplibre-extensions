@@ -7,9 +7,8 @@
 <br/>
 <Draw />
 
-## 实现
 
-* 创建绘制管理器
+## 实现
 
 ```ts
 
@@ -22,7 +21,7 @@ const sourceProxy = new GeoJSONSourceProxy({ map });
 const drawManager = new DrawManager({ sourceProxy });
 ```
 
-* 参数
+## 参数
 
 | 参数 | 说明 | 类型 | 默认值 |
 | - | - | - | - |
@@ -30,7 +29,7 @@ const drawManager = new DrawManager({ sourceProxy });
 | sourceProxy | 绘制数据代理 | GeoJSONSourceProxy | 必填 |
 
 
-* 方法
+## 方法
 
 ```ts
 // 绘制点
@@ -58,7 +57,7 @@ drawManager.stop();
 drawManager.clear();
 ```
 
-* 事件
+## 事件
 
 ```ts
 // 一次图形绘制完成
@@ -68,10 +67,15 @@ drawManager.on("drawed" ,async e =>{
 
 ```
 
-* 属性
+## 属性
 
 | 属性 | 类型 | 只读 | 说明 |
 | - | - | - | - |
+| map | maplibregl.Map | true | 地图实例 |
+| sourceProxy | GeoJSONSourceProxy | true | 数据源代理 |
+| drawing | boolean | true | 是否开启了绘制 |
+| currentFeatureId | string | true | 当前绘制的图形id - 绘制点时一直为undefined |
+| layerSpecs | ReadonlyArray<Readonly<maplibregl.AddLayerObject>> | true | 图层样式配置 |
 | id_layer_point | string | true | 点图层id |
 | id_layer_point_symbol | string | true | 点符号图层id |
 | id_layer_line | string | true | 线图层id |
@@ -80,8 +84,3 @@ drawManager.on("drawed" ,async e =>{
 | id_layer_polygon_circle | string | true | 面顶点图层id |
 | id_layer_polygon_outline | string | true | 面外边线图层id |
 | id_layer_polygon_subline | string | true | 面辅助线图层id |
-| layerSpecs | ReadonlyArray<Readonly<maplibregl.AddLayerObject>> | true | 图层样式配置 |
-| map | maplibregl.Map | true | 地图实例 |
-| sourceProxy | GeoJSONSourceProxy | true | 数据源代理 |
-| drawing | boolean | true | 是否开启了绘制 |
-| currentFeatureId | string | true | 当前绘制的图形id - 绘制点时一直为undefined |

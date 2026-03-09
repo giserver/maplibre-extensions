@@ -34,7 +34,7 @@ type MeasureLineStringOptions = {
 }
 
 
-type TMeasurePolygonOptions = {
+type MeasurePolygonOptions = {
     format(area: number): string;
     withLineString?: boolean;
     measureLineStringOptions: MeasureLineStringOptions;
@@ -42,10 +42,10 @@ type TMeasurePolygonOptions = {
     area?: (polygon: GeoJSON.Polygon) => number;
 };
 
-type TMeasureGeometryOptions = {
+type MeasureGeometryOptions = {
     point: MeasurePointOptions;
     line: MeasureLineStringOptions;
-    polygon: TMeasurePolygonOptions;
+    polygon: MeasurePolygonOptions;
 }
 
 function measurePoint(g: GeoJSON.Position, options: MeasurePointOptions): MeasureResultFeature[] {
@@ -121,7 +121,7 @@ function measureLineString(g: GeoJSON.Position[], options: MeasureLineStringOpti
     return ret;
 }
 
-function measurePolygon(g: GeoJSON.Position[][], options: TMeasurePolygonOptions): MeasureResultFeature[] {
+function measurePolygon(g: GeoJSON.Position[][], options: MeasurePolygonOptions): MeasureResultFeature[] {
     const ret = new Array<MeasureResultFeature>();
 
     if (options?.withLineString !== false) {
@@ -149,7 +149,7 @@ function measurePolygon(g: GeoJSON.Position[][], options: TMeasurePolygonOptions
     return ret;
 }
 
-export function measureGeometry(g: GeoJSON.Geometry | GeoJSON.Feature | GeoJSON.Feature[] | GeoJSON.FeatureCollection, options: TMeasureGeometryOptions): MeasureResultFeature[] {
+export function measureGeometry(g: GeoJSON.Geometry | GeoJSON.Feature | GeoJSON.Feature[] | GeoJSON.FeatureCollection, options: MeasureGeometryOptions): MeasureResultFeature[] {
     let result = new Array<MeasureResultFeature>();
 
     if (g instanceof Array)
@@ -179,7 +179,7 @@ export function measureGeometry(g: GeoJSON.Geometry | GeoJSON.Feature | GeoJSON.
 
 export type TMeasureManagerOptions = {
     sourceProxy: GeoJSONSourceProxy,
-    base: TMeasureGeometryOptions;
+    base: MeasureGeometryOptions;
 }
 
 export class MeasureManager {
@@ -398,6 +398,14 @@ export class MeasureManager {
     }
 
     /**
+ * 显示线线段数据
+ * @param val
+ */
+    showLineSegment(val: boolean) {
+        this.map.setFilter(this.id_layer_measrue_line_segment, val ? ["==", ["get", "type"], "line-segment"] : ["==", "1", "0"]);
+    }
+
+    /**
      * 设置是否显示面方向
      * @param val
      */
@@ -419,14 +427,6 @@ export class MeasureManager {
      */
     showPolygonLineSegment(val: boolean) {
         this.map.setFilter(this.id_layer_measure_polygon_line_segment, val ? ["==", ["get", "type"], "polygon-line-segment"] : ["==", "1", "0"]);
-    }
-
-    /**
-     * 显示线线段数据
-     * @param val
-     */
-    showLineSegment(val: boolean) {
-        this.map.setFilter(this.id_layer_measrue_line_segment, val ? ["==", ["get", "type"], "line-segment"] : ["==", "1", "0"]);
     }
 
     /**

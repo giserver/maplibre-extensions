@@ -8,3 +8,7 @@ button:hover{
     background-color: #939add;
     color: white;
 }
+
+select {
+    padding: 0 12px 0 6px;
+}

@@ -1,15 +1,85 @@
 <template>
   <Map @map-loaded="handleMapLoaded"></Map>
+
+  <div class="control-panel">
+    <div>颜色</div>
+
+    <div
+      v-for="(item, key) in snapStyleRef"
+      :key="key"
+      style="display: flex; align-items: center"
+    >
+      <label>{{ item.label }}</label>
+      <input type="color" v-model="item.color" />
+    </div>
+  </div>
+
+  <div class="control-panel">
+    <div>大小</div>
+    <div
+      v-for="(item, key) in snapStyleRef"
+      :key="key"
+      style="display: flex; align-items: center"
+    >
+      <label>{{ item.label }}</label>
+      <input type="range" v-model="item.size" min="1" max="50" />
+      <span>{{ item.size }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import Map from "./Map.vue";
-import { DrawManager, SnapManager } from "../../src";
+import { DrawManager, SnapManager, TNearestPointType } from "../../src";
 import { GeoJSONSourceProxy, IdentityGeoJSONFeature } from "../../src/core";
+import { ref, watch, watchEffect } from "vue";
 
 let snapManager: SnapManager;
 let drawManager: DrawManager;
 
+const snapStyleRef = ref<
+  Record<
+    TNearestPointType,
+    {
+      label: string;
+      color: string;
+      size: number;
+    }
+  >
+>({
+  vertex: {
+    label: "顶点",
+    color: "#ff0000",
+    size: 20,
+  },
+  "line-above": {
+    label: "线上",
+    color: "#ff0000",
+    size: 22,
+  },
+  "line-mid": {
+    label: "线中点",
+    color: "#ff0000",
+    size: 22,
+  },
+});
+
+watch(
+  snapStyleRef,
+  () => {
+    const colors = {} as any;
+    const sizes = {} as any;
+
+    for (const key in snapStyleRef.value) {
+      colors[key] = (snapStyleRef.value as any)[key].color;
+      sizes[key] = (snapStyleRef.value as any)[key].size;
+    }
+
+    snapManager.setSnapColor(colors);
+    snapManager.setSnapSize(sizes);
+  },
+  { deep: true },
+);
 function handleMapLoaded(map: maplibregl.Map) {
   snapManager = new SnapManager({
     map,
@@ -54,4 +124,10 @@ function handleMapLoaded(map: maplibregl.Map) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.control-panel {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+}
+</style>

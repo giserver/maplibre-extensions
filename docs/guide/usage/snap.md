@@ -71,6 +71,12 @@ snapManager.toggleEnable();
 ```ts
 // 启用或关闭捕捉
 snapManager.toggleEnable();
+
+// 设置snap UI 颜色
+snapManager.setSnapColor({ vertex: "blue", "line-mid": "green" , "line-above" : "red"});
+
+// 设置snap UI 大小
+snapManager.setSnapSize({ vertex: 10, "line-mid": 5, "line-above": 5 });
 ```
 
 ## 属性

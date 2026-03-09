@@ -1,6 +1,6 @@
 import * as turf from "@turf/turf";
 
-type TNearestPointType = "line-above" | "line-mid" | "vertex";
+export type TNearestPointType = "line-above" | "line-mid" | "vertex";
 
 function distance(p1: GeoJSON.Position, p2: GeoJSON.Position) {
     return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
@@ -232,6 +232,28 @@ export class SnapManager {
         this._snapHtmlElement.style.display = this.enable ? "block" : "none";
     }
 
+    setSnapColor(options: Partial<Record<TNearestPointType, string | undefined>>) {
+        this.resetSnapHtmlElement((v, k) => {
+            const color = options[k];
+            if (color) {
+                return v.replace(/fill="#[0-9a-fA-F]{3,8}"/g, `fill="${color}"`)
+                    .replace(/fill="rgb\([^)]+\)"/g, `fill="${color}"`)
+                    .replace(/fill="rgba\([^)]+\)"/g, `fill="${color}"`)
+                    .replace(/fill=["']([^"']+)["']/g, `fill="${color}"`);
+            }
+        });
+    }
+
+    setSnapSize(options: Partial<Record<TNearestPointType, number | undefined>>) {
+        this.resetSnapHtmlElement((v, k) => {
+            const size = options[k];
+            if (size !== undefined) {
+                return v.replace(/width="[^"]*"/, `width="${size}"`)
+                    .replace(/height="[^"]*"/, `height="${size}"`);
+            }
+        });
+    }
+
     private updateMapMouseEvent(e: any) {
         if (this.hitPoint) {
             e.lngLat.lng = this.hitPoint[0];
@@ -255,8 +277,16 @@ export class SnapManager {
         }
     }
 
-
     private setSnapHtmlElement(type: TNearestPointType) {
         this._snapHtmlElement.innerHTML = this._svgs.get(type)!;
+    }
+
+    private resetSnapHtmlElement(func: (value: string, type: TNearestPointType) => string | undefined) {
+        this._svgs.forEach((v, k) => {
+            const newValue = func(v, k);
+            if (newValue) {
+                this._svgs.set(k, newValue);
+            }
+        });
     }
 }

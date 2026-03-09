@@ -10,6 +10,8 @@
 ## 实现
 
 ```ts
+import { DrawManager, GeoJSONSourceProxy, MeasureManager } from "maplibre-extensions";
+
 // 创建一个source代理，用于存储测量数据
 const sourceProxy = new GeoJSONSourceProxy({
   map,

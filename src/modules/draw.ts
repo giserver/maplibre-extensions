@@ -104,7 +104,7 @@ export class DrawManager extends Events.EventManager<{
                 "circle-stroke-color": "#fff",
                 "circle-stroke-width": 2,
             },
-            filter: ["==", "$type", "Polygon"],
+            filter: ["all", ["==", "$type", "Polygon"], ["!", ["boolean", ['get', "circle"], false]]],
         },
     ];
 
@@ -154,8 +154,10 @@ export class DrawManager extends Events.EventManager<{
         this.escOnce = (e: KeyboardEvent) => {
             // 如果按下esc
             if (e.key.toLocaleLowerCase() === "escape") {
-                if (this.currentType)
+                if (this.currentType) {
+                    this.setPolygonSublineData([]);
                     this.start(this.currentType)
+                }
             }
         };
     }
@@ -637,8 +639,9 @@ export class DrawManager extends Events.EventManager<{
                     type: "Feature",
                     geometry: circle,
                     properties: {
-                        id: this._currentFeatureId
-                    }
+                        id: this._currentFeatureId,
+                        circle: true
+                    } as any
                 });
 
                 this.fire("drawed", { target: this, feature: result.updateFeatures[0]! });

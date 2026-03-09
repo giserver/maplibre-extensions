@@ -31,9 +31,9 @@ function handleMapLoaded(map: maplibregl.Map) {
       },
       line: {
         withStart: true,
-        format: (length, index, end, segment) => {
+        format: (length, index, type) => {
           if (index === 0) return "起点";
-          if (end) return `总长: ${length.toFixed(2)}米`;
+          if (type === "line-end") return `总长: ${length.toFixed(2)}米`;
           return `${length.toFixed(2)}米`;
         },
       },
@@ -42,9 +42,9 @@ function handleMapLoaded(map: maplibregl.Map) {
         withLineString: true,
         measureLineStringOptions: {
           withStart: false,
-          format: (length, index, end, segment) => {
+          format: (length, index, type) => {
             if (index === 0) return "起点";
-            if (end) return `总长: ${length.toFixed(2)}米`;
+            if (type === "line-end") return `总长: ${length.toFixed(2)}米`;
             return `${length.toFixed(2)}米`;
           },
         },

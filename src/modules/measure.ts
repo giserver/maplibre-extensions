@@ -21,7 +21,7 @@ type MeasureLineStringOptions = {
      * @param end 是否为最后一个
      * @param segment 是否为中间数值
      */
-    format(length: number, index: number, end: boolean, segment: boolean): string;
+    format(length: number, index: number, type: "line-string" | "line-segment" | "line-end"): string;
 
     /**
      * 是否包含第一个数值
@@ -94,7 +94,7 @@ function measureLineString(g: GeoJSON.Position[], options: MeasureLineStringOpti
                     coordinates: c.geometry.coordinates,
                 },
                 properties: {
-                    value: options.format(l, i, false, true),
+                    value: options.format(l, i, "line-segment"),
                     type: isPolygon ? "polygon-line-segment" : "line-segment",
                     parent: { type: 'LineString', coordinates: g }
                 },
@@ -111,7 +111,7 @@ function measureLineString(g: GeoJSON.Position[], options: MeasureLineStringOpti
                 coordinates: current,
             },
             properties: {
-                value: options.format(sumLength, i, i === g.length - 1, false),
+                value: options.format(sumLength, i, i === g.length - 1 ? "line-end" : "line-string"),
                 type: isPolygon ? "polygon-line" : "line",
                 parent: { type: 'LineString', coordinates: g }
             },

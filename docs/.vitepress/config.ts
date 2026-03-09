@@ -18,12 +18,6 @@ export default {
                 { text: "快速开始", link: "/start" },
                 { text: "说明", link: "/explain" }]
         }, {
-            text: "核心",
-            base: "/guide/core/",
-            items: [
-                { text: "GeoJSONSourceProxy", link: "geojson-source-proxy" },
-            ]
-        }, {
             text: "功能",
             base: "/guide/usage/",
             items: [
@@ -32,6 +26,12 @@ export default {
                 { text: "捕捉", link: "snap" },
                 { text: "顶点编辑", link: "vertex" },
                 { text: "mapbox 映射", link: "mapbox" }
+            ]
+        }, {
+            text: "core",
+            base: "/guide/core/",
+            items: [
+                { text: "GeoJSONSourceProxy", link: "geojson-source-proxy" },
             ]
         }]
     }

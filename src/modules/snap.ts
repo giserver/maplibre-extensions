@@ -129,7 +129,7 @@ export interface SnapManagerOptions {
 }
 
 export class SnapManager {
-    private map: maplibregl.Map;
+    readonly map: maplibregl.Map;
     private _hitPoint: GeoJSON.Position | undefined;
     private _snapHtmlElement = document.createElement("div");
     private _svgs = new Map<TNearestPointType, string>([
@@ -249,14 +249,14 @@ export class SnapManager {
             style.display = "block";
             style.left = `${p.x}px`;
             style.top = `${p.y}px`;
-            this.setSnapHtmlElementStyle(data.type);
+            this.setSnapHtmlElement(data.type);
         } else {
             style.display = "none";
         }
     }
 
 
-    private setSnapHtmlElementStyle(type: TNearestPointType) {
+    private setSnapHtmlElement(type: TNearestPointType) {
         this._snapHtmlElement.innerHTML = this._svgs.get(type)!;
     }
 }

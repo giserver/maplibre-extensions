@@ -185,7 +185,7 @@ abstract class MouseHandler {
 }
 
 class MouseRotateHandler extends MouseHandler {
-    correctButton(e: MouseEvent, button: number): boolean {
+    correctButton(_: MouseEvent, button: number): boolean {
         return button === 1;
     }
 
@@ -204,7 +204,7 @@ class MouseRotateHandler extends MouseHandler {
 }
 
 class MousePitchHandler extends MouseHandler {
-    correctButton(e: MouseEvent, button: number): boolean {
+    correctButton(_: MouseEvent, button: number): boolean {
         return button === 1;
     }
 

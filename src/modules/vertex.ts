@@ -93,7 +93,7 @@ export class VertexEditorMananger {
             }
         });
 
-        this.map.on("mouseleave", this.id_layer_point, (e) => {
+        this.map.on("mouseleave", this.id_layer_point, (_) => {
             if (this.hoverFeature) {
                 this.map.setFeatureState({ id: this.hoverFeature.properties.id, source: this.id }, { hover: false });
                 this.hoverFeature = undefined;

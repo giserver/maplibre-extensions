@@ -1,14 +1,14 @@
-import { LayerGroup, TLayerGroupEventDefinition } from "../layer-group";
+import { LayerGroup, LayerGroupEventDefinition } from "../layer-group";
 import { GeoJSONSourceProxy } from "../geojson-source-proxy";
-import { TIdentityGeoJSONFeature } from "../types";
+import { IdentityGeoJSONFeature } from "../types";
 
-export type GeoJSONLayerGroupOptions<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> = {
+export type GeoJSONLayerGroupOptions<TFeature extends IdentityGeoJSONFeature = IdentityGeoJSONFeature> = {
     map: maplibregl.Map;
     layers: Array<Omit<maplibregl.LayerSpecification, "source"> & { source: string }>,
     data: TFeature[]
 }
 
-export class GeoJSONLayerGroup<TFeature extends TIdentityGeoJSONFeature = TIdentityGeoJSONFeature> extends LayerGroup<TLayerGroupEventDefinition & {}> {
+export class GeoJSONLayerGroup<TFeature extends IdentityGeoJSONFeature = IdentityGeoJSONFeature> extends LayerGroup<LayerGroupEventDefinition & {}> {
     readonly source: GeoJSONSourceProxy;
 
     constructor(options: GeoJSONLayerGroupOptions<TFeature>) {

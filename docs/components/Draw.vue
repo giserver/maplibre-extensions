@@ -2,7 +2,7 @@
   <Map @map-loaded="handleMapLoaded">
     <template #top-right>
       <textarea
-        style="height: 730px; width: 240px; font-size: 10px; opacity: 0.8"
+        style="height: 510px; width: 240px; font-size: 10px; opacity: 0.8"
         readonly
         >{{ dataStr }}</textarea
       >

@@ -1,5 +1,6 @@
 
 import { RequestTransformFunction } from 'maplibre-gl';
+import { CONTRACT_STRINGS } from "../core/contracts";
 
 export namespace Style {
     /**
@@ -95,5 +96,87 @@ export namespace Style {
 
             return { url };
         };
+    }
+
+    export class StyleProxy {
+        private cacheLayers = new Array<any>();
+
+        private customLayers = new Array<any>();
+        private customSources = new Map<string, any>();
+        private customImages = new Map<string, any>();
+
+        constructor(private map: maplibregl.Map) {
+            map.on("style.load", () => {
+                // 清空代理
+                (this.map as any)[CONTRACT_STRINGS.MAP_LAYER_PROXY_SYMBOL] = {};
+
+                // 缓存 初始style中的layer
+                this.cacheLayers = map.getStyle().layers;
+
+                // 添加自定义图片
+                this.customImages.forEach((v, k) => {
+                    if (!map.getImage(k)) {
+                        map.addImage(k, v.data, { sdf: v.sdf });
+                    }
+                });
+
+                // 添加自定义source
+                this.customSources.forEach((v, k) => {
+                    // 确保source没有被添加, mapbox-gl-draw 会在load之前被添加
+                    if (!map.getSource(k)) map.addSource(k, v);
+                });
+
+                // 找到自定义raster的beforeId
+                let customRasterBeforeId: string | undefined;
+                this.cacheLayers.forEach((l, index) => {
+                    if (l.type === "raster") {
+                        customRasterBeforeId = this.cacheLayers[index + 1]?.id;
+                    }
+
+                    if (customRasterBeforeId === undefined && l.layout && l.layout["text-field"] !== undefined) {
+                        customRasterBeforeId = l.id;
+                    }
+                });
+
+                // 添加自定义layer
+                this.customLayers.forEach((l) => {
+                    if (!map.getLayer(l.id)) {
+                        if (l.type === "raster") {
+                            map.addLayer(l, customRasterBeforeId);
+                        } else {
+                            map.addLayer(l);
+                        }
+                    }
+                });
+            });
+        }
+
+        setStyle(style: string) {
+            this.customLayers = new Array<any>();
+            this.customSources = new Map<string, any>();
+            this.customImages = new Map<string, any>();
+
+            this.map.getStyle().layers.forEach((l: any) => {
+                if (this.cacheLayers.some((cl) => cl.id === l.id)) return;
+
+                const sourceId = (l as any).source as string;
+
+                if (!this.customSources.get(sourceId)) {
+                    const source = this.map.getSource(sourceId) as any;
+                    if (source && source.serialize) {
+                        this.customLayers.push(l);
+                        this.customSources.set(sourceId, (this.map.getSource(sourceId) as any).serialize());
+                    }
+                } else {
+                    this.customLayers.push(l);
+                }
+            });
+
+            this.map.listImages().forEach((x) => {
+                this.customImages.set(x, this.map.getImage(x));
+            });
+
+            this.map.setStyle(style);
+        }
     }
 }

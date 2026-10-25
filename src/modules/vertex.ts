@@ -1,5 +1,6 @@
 import { IdentityGeoJSONFeature } from "../core";
 import * as turf from "@turf/turf";
+import * as maplibregl from 'maplibre-gl';
 
 type TCustomFeature = GeoJSON.Feature<GeoJSON.Geometry, { id: number; type?: "end" | "mid"; pid?: number; division_index?: number }>;
 

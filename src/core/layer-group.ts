@@ -1,3 +1,4 @@
+import * as maplibregl from 'maplibre-gl';
 import { Events } from "./event";
 
 export type LayerGroupEventDefinition = {

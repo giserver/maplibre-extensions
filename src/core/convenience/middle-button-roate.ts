@@ -1,3 +1,5 @@
+import * as maplibregl from 'maplibre-gl';
+
 type MercatorCoordinate = {
     x: number;
     y: number;
@@ -11,7 +13,7 @@ class Point {
     constructor(
         public x: number,
         public y: number,
-    ) {}
+    ) { }
 
     dist(point: Point) {
         return Math.sqrt(Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2));

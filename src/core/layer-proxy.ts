@@ -1,14 +1,16 @@
+import * as maplibregl from 'maplibre-gl';
+
 export class LayerProxy<T extends maplibregl.LayerSpecification> {
     readonly layer: T;
 
-    get layout(){
+    get layout() {
         return this.layer.layout!;
     }
 
-    get paint(){
+    get paint() {
         return this.layer.paint!;
     }
-    
+
 
     /**
      *
@@ -41,7 +43,7 @@ export class LayerProxy<T extends maplibregl.LayerSpecification> {
                     const minzoom = taret.maxzoom ?? map.getMinZoom();
                     map.setLayerZoomRange(taret.id, minzoom, value);
                 }
-                else if(key === "filter"){
+                else if (key === "filter") {
                     map.setFilter(taret.id, value);
                 }
                 else {
@@ -53,7 +55,7 @@ export class LayerProxy<T extends maplibregl.LayerSpecification> {
         });
     }
 
-    toJSON(){
+    toJSON() {
         return this.layer;
     }
 }

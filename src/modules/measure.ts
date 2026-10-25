@@ -1,3 +1,4 @@
+import * as maplibregl from 'maplibre-gl';
 import * as turf from '@turf/turf';
 import { uuidv7 } from 'uuidv7';
 

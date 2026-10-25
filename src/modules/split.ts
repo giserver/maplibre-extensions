@@ -2,6 +2,7 @@
  * 分割，使用线段分割任何东西
  */
 
+import * as maplibregl from 'maplibre-gl';
 import { uuidv7 } from 'uuidv7';
 import * as turf from '@turf/turf';
 import { GeoJSONSourceProxy, Events } from '../core';

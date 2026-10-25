@@ -1,5 +1,4 @@
-
-import { RequestTransformFunction } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import { CONTRACT_STRINGS } from "../core/contracts";
 
 export namespace Style {
@@ -69,7 +68,7 @@ export namespace Style {
     }
 
 
-    export function createMapboxRequestTransform(access_token: string): RequestTransformFunction {
+    export function createMapboxRequestTransform(access_token: string): maplibregl.RequestTransformFunction {
         return (url: string, resType?: maplibregl.ResourceType): maplibregl.RequestParameters | undefined => {
             const mapbox_api_url = "https://api.mapbox.com";
 

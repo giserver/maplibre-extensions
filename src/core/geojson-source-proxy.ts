@@ -1,3 +1,4 @@
+import * as maplibregl from 'maplibre-gl';
 import { uuidv7 } from 'uuidv7';
 import { IdentityGeoJSONFeature } from "./types";
 import { Events } from './event';

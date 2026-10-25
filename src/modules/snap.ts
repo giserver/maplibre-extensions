@@ -1,3 +1,4 @@
+import * as maplibregl from 'maplibre-gl';
 import * as turf from "@turf/turf";
 
 export type TNearestPointType = "line-above" | "line-mid" | "vertex";

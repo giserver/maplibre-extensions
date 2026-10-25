@@ -7,8 +7,8 @@ import * as turf from '@turf/turf';
 import { GeoJSONSourceProxy, Events } from '../core';
 import { DrawManager } from './draw';
 
-export class DivManager extends Events.EventManager<{
-    "dived": { target: DivManager, orgGeometry: GeoJSON.Geometry, divedGeometries: GeoJSON.Geometry[] }
+export class SplitManager extends Events.EventManager<{
+    "split": { target: SplitManager, originalGeometry: GeoJSON.Geometry, splitGeometries: GeoJSON.Geometry[] }
 }> {
     private readonly drawer: DrawManager;
     private readonly sourceProxy: GeoJSONSourceProxy;
@@ -24,9 +24,9 @@ export class DivManager extends Events.EventManager<{
         this.drawer = new DrawManager({ once: true, sourceProxy: this.sourceProxy });
     }
 
-    div(geometry: GeoJSON.Geometry) {
+    split(geometry: GeoJSON.Geometry) {
         if (geometry.type === 'Point') {
-            console.warn("point type can not div");
+            console.warn("point type can not split");
             return;
         }
 
@@ -34,17 +34,17 @@ export class DivManager extends Events.EventManager<{
         this.drawer.once("drawed", async e => {
             // 判断绘制图形是否为线段
             if (e.feature.geometry.type !== 'LineString') {
-                throw new Error("div drawer must draw linestring , but got " + e.feature.geometry.type);
+                throw new Error("split drawer must draw linestring , but got " + e.feature.geometry.type);
             }
 
             // 分割算法
-            const divedGeometries = splitGeometryByLine(e.feature.geometry, geometry);
+            const splitGeometries = splitGeometryByLine(e.feature.geometry, geometry);
 
             // 执行分割回调
-            await that.fire("dived", {
+            await that.fire("split", {
                 target: that,
-                orgGeometry: geometry,
-                divedGeometries
+                originalGeometry: geometry,
+                splitGeometries
             });
 
             // 清空绘制的线段

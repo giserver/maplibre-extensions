@@ -3,3 +3,4 @@ export * from './measure';
 export * from './snap';
 export * from './vertex';
 export * from './style';
+export * from './split';

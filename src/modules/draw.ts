@@ -146,7 +146,7 @@ export class DrawManager extends Events.EventManager<{
         });
 
         this.sourceProxy.on("clear", async () => {
-            this.setPolygonSublineData([]);
+            this.setSublineData([]);
         });
 
         //#endregion
@@ -155,7 +155,7 @@ export class DrawManager extends Events.EventManager<{
             // 如果按下esc
             if (e.key.toLocaleLowerCase() === "escape") {
                 if (this.currentType) {
-                    this.setPolygonSublineData([]);
+                    this.setSublineData([]);
                     this.start(this.currentType)
                 }
             }
@@ -200,10 +200,10 @@ export class DrawManager extends Events.EventManager<{
 
     clear(): void {
         this.sourceProxy.clear();
-        this.setPolygonSublineData([]);
+        this.setSublineData([]);
     }
 
-    private setPolygonSublineData(features: GeoJSON.Feature[]) {
+    private setSublineData(features: GeoJSON.Feature[]) {
         (this.map.getSource(this.id_layer_polygon_subline) as maplibregl.GeoJSONSource)
             .setData({ type: 'FeatureCollection', features });
     }
@@ -407,7 +407,7 @@ export class DrawManager extends Events.EventManager<{
                 if (this.options.once) this.stop();
             }
 
-            this.setPolygonSublineData([]);
+            this.setSublineData([]);
         };
 
         const mouseMoveHandler = (e: maplibregl.MapMouseEvent) => {
@@ -420,7 +420,7 @@ export class DrawManager extends Events.EventManager<{
 
             if (coords.length === 2) {
                 setTimeout(() => {
-                    this.setPolygonSublineData([{
+                    this.setSublineData([{
                         type: "Feature",
                         geometry: { type: "LineString", coordinates: coords },
                         properties: {},
@@ -455,7 +455,7 @@ export class DrawManager extends Events.EventManager<{
                 this.sourceProxy.delete(feature.properties.id);
                 this._currentFeatureId = undefined;
 
-                this.setPolygonSublineData([]);
+                this.setSublineData([]);
             } else {
                 coords.pop();
                 if (coords.length === 3) coords.pop(); // 辅助线 _line_addion 更新
@@ -486,7 +486,7 @@ export class DrawManager extends Events.EventManager<{
             map.off("click", clickHandler);
             map.off("dblclick", doubleClickHandler);
 
-            this.setPolygonSublineData([]);
+            this.setSublineData([]);
 
             this.map.getCanvas().removeEventListener("keydown", backKeyHandler);
         };
@@ -551,7 +551,7 @@ export class DrawManager extends Events.EventManager<{
                     stepCount = 0;
 
                     this.fire("drawed", { target: this, feature });
-                    this.setPolygonSublineData([]);
+                    this.setSublineData([]);
                 } else {
                     coords.splice(coords.length - 1, 0, point);
                     stepCount++;
@@ -647,7 +647,7 @@ export class DrawManager extends Events.EventManager<{
                 this.fire("drawed", { target: this, feature: result.updateFeatures[0]! });
                 firstPoint = undefined;
                 this._currentFeatureId = undefined;
-                this.setPolygonSublineData([]);
+                this.setSublineData([]);
             } else {
                 firstPoint = point;
                 this._currentFeatureId = uuidv7();
@@ -661,7 +661,7 @@ export class DrawManager extends Events.EventManager<{
 
             const circle = createCircle(firstPoint, point);
 
-            this.setPolygonSublineData([{
+            this.setSublineData([{
                 type: "Feature",
                 geometry: {
                     type: 'LineString',

@@ -39,5 +39,8 @@
   "dependencies": {
     "@turf/turf": "^7.3.4",
     "uuidv7": "^1.1.0"
+  },
+  "peerDependencies": {
+    "maplibre-gl": ">=4.0.0"
   }
 }

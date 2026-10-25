@@ -11,6 +11,16 @@ export default defineConfig({
       name: 'MaplibreExtensions',
       fileName: 'index',
     },
+    rollupOptions: {
+      external: ['maplibre-gl', '@turf/turf', 'uuidv7'],
+      output: {
+        globals: {
+          'maplibre-gl': 'maplibregl',
+          '@turf/turf': 'turf',
+          'uuidv7': 'uuidv7',
+        },
+      },
+    },
   },
   test: {
     environment: 'happy-dom',
